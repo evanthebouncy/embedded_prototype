@@ -1,6 +1,6 @@
 import numpy as np
 import random
-
+import pickle
 from baselines.common.segment_tree import SumSegmentTree, MinSegmentTree
 
 
@@ -21,9 +21,22 @@ class ReplayBuffer(object):
     def __len__(self):
         return len(self._storage)
 
+    def load_memory(self,memory_path):
+        import pickle
+        with open(memory_path,'rb') as f:
+            self._storage=pickle.load(f)
+
+    def save_memory(self,memory_path):
+        import pickle
+        with open(memory_path,'wb') as f:
+            pickle.dump(self._storage,f)
+
     def add(self, obs_t, action, reward, obs_tp1, done):
         data = (obs_t, action, reward, obs_tp1, done)
-        print(data)
+
+        #print(obs_t.__array__().shape,action,reward,obs_tp1.__array__().shape,done)
+
+        #print(obs_t.__array__()[:,:,0])
 
         if self._next_idx >= len(self._storage):
             self._storage.append(data)

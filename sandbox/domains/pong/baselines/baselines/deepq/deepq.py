@@ -116,8 +116,11 @@ def learn(env,
           param_noise=False,
           callback=None,
           load_path=None,
+          student = False,
+          memory_path = None,
           **network_kwargs
             ):
+    print(memory_path)
     """Train a deepq model.
 
     Parameters
@@ -228,6 +231,8 @@ def learn(env,
     else:
         replay_buffer = ReplayBuffer(buffer_size)
         beta_schedule = None
+        if student:
+            replay_buffer.load_memory(memory_path)
     # Create the schedule for exploration starting from 1.
     exploration = LinearSchedule(schedule_timesteps=int(exploration_fraction * total_timesteps),
                                  initial_p=1.0,
@@ -281,7 +286,8 @@ def learn(env,
             reset = False
             new_obs, rew, done, _ = env.step(env_action)
             # Store transition in the replay buffer.
-            replay_buffer.add(obs, action, rew, new_obs, float(done))
+            if student == False:
+                replay_buffer.add(obs, action, rew, new_obs, float(done))
             obs = new_obs
 
             episode_rewards[-1] += rew
@@ -325,6 +331,8 @@ def learn(env,
                     save_variables(model_file)
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
+
+        replay_buffer.save_memory(memory_path)
         if model_saved:
             if print_freq is not None:
                 logger.log("Restored model with mean reward: {}".format(saved_mean_reward))
