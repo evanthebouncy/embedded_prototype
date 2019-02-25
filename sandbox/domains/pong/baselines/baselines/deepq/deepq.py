@@ -121,6 +121,7 @@ def learn(env,
           **network_kwargs
             ):
     print(memory_path)
+    print('student_status',student)
     """Train a deepq model.
 
     Parameters
@@ -228,6 +229,8 @@ def learn(env,
         beta_schedule = LinearSchedule(prioritized_replay_beta_iters,
                                        initial_p=prioritized_replay_beta0,
                                        final_p=1.0)
+        if student:
+            replay_buffer.load_memory(memory_path)
     else:
         replay_buffer = ReplayBuffer(buffer_size)
         beta_schedule = None
@@ -251,6 +254,7 @@ def learn(env,
         td = checkpoint_path or td
 
         model_file = os.path.join(td, "model")
+        print(model_file)
         model_saved = False
 
         if tf.train.latest_checkpoint(td) is not None:
@@ -332,7 +336,9 @@ def learn(env,
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
 
-        replay_buffer.save_memory(memory_path)
+        print(mean_100ep_reward)
+        if memory_path is not None:
+            replay_buffer.save_memory(memory_path)
         if model_saved:
             if print_freq is not None:
                 logger.log("Restored model with mean reward: {}".format(saved_mean_reward))

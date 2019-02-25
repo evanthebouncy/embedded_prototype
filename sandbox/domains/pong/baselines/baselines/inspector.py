@@ -1,6 +1,6 @@
 import pickle
 
-path = 'memory'
+path = '='
 
 with open(path,'rb') as f:
     data = pickle.load(f)

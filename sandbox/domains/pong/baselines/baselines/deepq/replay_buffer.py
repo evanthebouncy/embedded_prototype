@@ -25,6 +25,7 @@ class ReplayBuffer(object):
         import pickle
         with open(memory_path,'rb') as f:
             self._storage=pickle.load(f)
+            print('loaded memory with length ',len(self._storage))
 
     def save_memory(self,memory_path):
         import pickle
