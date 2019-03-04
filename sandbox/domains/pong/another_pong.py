@@ -80,7 +80,7 @@ class PG(nn.Module):
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         #x = F.relu(self.bn3(self.conv3(x)))
-        x = self.fc2(self.fc1(x.view(x.size(0), -1)))
+        x = F.sogmoid(self.fc2(self.fc1(x.view(x.size(0), -1))))
         return torch.nn.MSELoss()(x,y)
 
     def learn_once(self, inputs, labels):  # inputs = embs,lengths
@@ -142,7 +142,31 @@ model = PG(84,84)
 model.cuda()
 
 
+def traintheshit(epoch=100,batch_size = 64):
+    import pickle
+    import random
+    path = 'inspected_memory'
+
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+
+    xs = []
+    goals = []
+    for obs_t, action, reward, obs_tp1, done in data:
+        x = obs_t[]-obst[]
+        xs.append(x)
+        goals.append(1 if action==2 else -1)
+
+    for i in range(epoch):
+        print(i)
+        idxes = [random.randint(0, len(xs) - 1) for _ in range(batch_size)]
+        model.learn_once(to_torch(np.array(xs[idxes]), 'float', True), to_torch(np.array(goals[idxes]), 'float', True))
+
+
+
 while True:
+
+    traintheshit()
     if render: env.render()
 
     # preprocess the observation, set input to network to be difference image
