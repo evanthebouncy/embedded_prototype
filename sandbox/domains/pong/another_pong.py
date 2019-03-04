@@ -16,7 +16,7 @@ import cv2
 # hyperparameters
 H = 200  # number of hidden layer neurons
 batch_size = 10  # every how many episodes to do a param update?
-learning_rate = 1e-3
+learning_rate = 1e-4
 gamma = 0.99  # discount factor for reward
 decay_rate = 0.99  # decay factor for RMSProp leaky sum of grad^2
 resume = False  # resume from previous checkpoint?
@@ -45,24 +45,25 @@ else:
 class PG(nn.Module):
     def __init__(self, h, w):
         super(PG, self).__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
+        self.conv1 = nn.Conv2d(4, 16, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
         self.bn2 = nn.BatchNorm2d(32)
-        #self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        #self.bn3 = nn.BatchNorm2d(32)
+        self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
+        self.bn3 = nn.BatchNorm2d(32)
 
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size, so compute it.
 
         def conv2d_size_out(size, kernel_size = 5, stride = 2):
             return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(w))
-        convh = conv2d_size_out(conv2d_size_out(h))
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
         linear_input_size = convw * convh * 32
-        self.fc1 = nn.Linear(linear_input_size, 10) # 448 or 512
-        self.fc2 = nn.Linear(10,1)
-        self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
+        self.fc1 = nn.Linear(linear_input_size, 16) # 448 or 512
+        self.fc2 = nn.Linear(16,1)
+        self.fc3 = nn.Linear(16,1)
+        self.opt = torch.optim.Adam(self.parameters(), lr=0.0001)
 
 
     # Called with either one element to determine next action, or a batch
@@ -72,15 +73,16 @@ class PG(nn.Module):
         x = F.relu(self.bn1(self.conv1(x)))
 
         x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
 
-        return F.sigmoid(self.fc2(self.fc1(x.view(x.size(0), -1))))
+        return F.sigmoid(self.fc2(F.relu(self.fc1(x.view(x.size(0), -1)))))
 
     def get_loss(self, x, y):
 
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
-        #x = F.relu(self.bn3(self.conv3(x)))
-        x = F.sogmoid(self.fc2(self.fc1(x.view(x.size(0), -1))))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.sigmoid(self.fc2(F.relu(self.fc1(x.view(x.size(0), -1)))))
         return torch.nn.MSELoss()(x,y)
 
     def learn_once(self, inputs, labels):  # inputs = embs,lengths
@@ -88,6 +90,7 @@ class PG(nn.Module):
         loss = self.get_loss(inputs, labels)
         loss.backward()
         self.opt.step()
+        print(loss.data.cpu().numpy())
         return loss
 
 grad_buffer = {k: np.zeros_like(v) for k, v in model.items()}  # update buffers that add up gradients over a batch
@@ -145,7 +148,7 @@ model.cuda()
 def traintheshit(epoch=100,batch_size = 64):
     import pickle
     import random
-    path = 'inspected_memory'
+    path = 'baselines/inspected_memory'
 
     with open(path, 'rb') as f:
         data = pickle.load(f)
@@ -153,20 +156,27 @@ def traintheshit(epoch=100,batch_size = 64):
     xs = []
     goals = []
     for obs_t, action, reward, obs_tp1, done in data:
-        x = obs_t[]-obst[]
+        #print(obs_t.shape)
+        x=np.transpose(obs_t,(2,0,1))
+        #x = obs_t[3]-obs_t[2]
+        #x = np.expand_dims(x,-1)
+        #x = np.transpose(x,(2,0,1))
+        #print(x.shape)
+        #print(action)
         xs.append(x)
-        goals.append(1 if action==2 else -1)
-
+        goals.append(1 if action==2 or action==4 else -1)
+    xs = np.array(xs)
+    goals=np.array(goals)
     for i in range(epoch):
         print(i)
-        idxes = [random.randint(0, len(xs) - 1) for _ in range(batch_size)]
-        model.learn_once(to_torch(np.array(xs[idxes]), 'float', True), to_torch(np.array(goals[idxes]), 'float', True))
+        idxes = [random.randint(0, 2 - 1) for _ in range(batch_size)]
+        model.learn_once(to_torch(xs[idxes], 'float', True), to_torch(goals[idxes], 'float', True))
 
 
+traintheshit(100000,3)
 
 while True:
 
-    traintheshit()
     if render: env.render()
 
     # preprocess the observation, set input to network to be difference image
