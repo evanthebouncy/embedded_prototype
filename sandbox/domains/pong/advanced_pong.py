@@ -130,6 +130,8 @@ reward_sum = 0
 episode_number = 0
 
 model = PG(80,80)
+model.cuda()
+
 
 while True:
     if render: env.render()
