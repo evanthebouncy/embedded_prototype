@@ -104,7 +104,6 @@ def prepro(frame):
 
     frame = np.expand_dims(frame, -1)
     frame = np.transpose(frame, (2, 0, 1))
-    print(frame.shape)
     return frame
 
 
@@ -140,7 +139,7 @@ reward_sum = 0
 episode_number = 0
 
 model = PG(84,84)
-#model.cuda()
+model.cuda()
 
 
 while True:
