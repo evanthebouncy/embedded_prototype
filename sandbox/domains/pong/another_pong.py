@@ -42,6 +42,53 @@ else:
     x = Variable(torch.from_numpy(x).type(tor_type), requires_grad = req)
     return x
 
+class PG2(nn.Module):
+    def __init__(self, h, w):
+        super(PG2, self).__init__()
+        self.conv1 = nn.Conv2d(4, 10, kernel_size=5, stride=2)
+
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5, stride=2)
+
+
+
+
+
+        # Number of Linear input connections depends on output of conv2d layers
+        # and therefore the input image size, so compute it.
+
+        def conv2d_size_out(size, kernel_size = 5, stride = 2):
+            return (size - (kernel_size - 1) - 1) // stride  + 1
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+        linear_input_size = convw * convh * 20
+        self.fc1 = nn.Linear(linear_input_size, 50) # 448 or 512
+        self.fc2 = nn.Linear(50,1)
+
+        self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
+
+
+    # Called with either one element to determine next action, or a batch
+    # during optimization. Returns tensor([[left0exp,right0exp]...]).
+    def forward(self, x):
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2(x), 2))
+
+        return F.sigmoid(self.fc2(F.relu(self.fc1(x.view(x.size(0), -1)))))
+
+    def get_loss(self, x, y):
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2(x), 2))
+        x = F.sigmoid(self.fc2(F.relu(self.fc1(x.view(x.size(0), -1)))))
+        return torch.nn.MSELoss()(x,y)
+
+    def learn_once(self, inputs, labels):  # inputs = embs,lengths
+        self.opt.zero_grad()
+        loss = self.get_loss(inputs, labels)
+        loss.backward()
+        self.opt.step()
+        print(loss.data.cpu().numpy())
+        return loss
+
 class PG(nn.Module):
     def __init__(self, h, w):
         super(PG, self).__init__()
@@ -141,7 +188,7 @@ running_reward = None
 reward_sum = 0
 episode_number = 0
 
-model = PG(84,84)
+model = PG2(84,84)
 model.cuda()
 
 
