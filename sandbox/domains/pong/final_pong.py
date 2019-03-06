@@ -82,13 +82,13 @@ def get_rollout(env,agent,steps=100):
             i=i+1
 
             state = prepro(state)
-            if ps == None:
-                ps = np.zeros_like(state)
+            if ps is None:
+                ps = np.zeros_like(state,float)
 
             states.append(state-ps)
 
             action = agent.act(state-ps)
-            actions.append(action)
+            actions.append(action.data[0])
             ps = state
             # Step through environment using chosen action
             state, reward, done, _ = env.step(2 if action.data[0]==0 else 3)
@@ -109,7 +109,7 @@ def get_rollout(env,agent,steps=100):
         update_reward(rewards,i)
     #rewards = to_torch(np.array(rewards),'float',True)
     #rewards = (rewards - rewards.mean()) / (rewards.std() + np.finfo(np.float32).eps)
-    return states,actions,rewards # state is frame diff, action is 0 or 1, rewards are updated rewards
+    return np.array(states),np.array(actions),np.array(rewards) # state is frame diff, action is 0 or 1, rewards are updated rewards
 
 def train(agent,trace):
     states,actions,rewards = trace
@@ -117,7 +117,6 @@ def train(agent,trace):
     actions = np.array(actions)
     rewards = to_torch(np.array(rewards),'float',True)
     c = agent.act(states,actions)
-    print(actions.shape)
     actions = to_torch(actions,'float',True)
     policy = c.log_prob(actions)
     loss = (torch.sum(torch.mul(policy, Variable(rewards)).mul(-1), -1))
@@ -150,23 +149,16 @@ def get_stored_trace():
     rewards = []
 
     for obs_t, action, reward, obs_tp1, done in data:
-        # print(obs_t.shape)
+        #print(obs_t.shape) # (84,84,4)
         x = np.transpose(obs_t, (2, 0, 1))
-        x = obs_t[3]-obs_t[2]
+        x = x[3]-x[2]
         x = np.expand_dims(x,-1)
         x = np.transpose(x,(2,0,1))
-        print(x.shape)
-        print(action)
         xs.append(x)
         actions.append(torch.tensor([0]) if action == 2 or action == 4 else torch.tensor([1]))
-        print(reward)
         rewards.append(reward)
     update_reward(rewards,0,True)
-    return xs,actions,rewards
-
-
-
-
+    return np.array(xs),np.array(actions),np.array(rewards)
 
 def update_reward(reward,steps,all=False):
     if all:
@@ -242,7 +234,7 @@ class Policy(nn.Module):
         return model(x)
 
 policy = CNN1((1,84,84),2)
-
+policy.cuda()
 optimizer = optim.Adam(policy.parameters(), lr=learning_rate)
 
 age = agent(policy)
@@ -279,8 +271,8 @@ def update_policy(exp):
 
 
 def main():
-    get_stored_trace()
-    return
+    #trace = get_stored_trace()
+    #train_large(age,trace)
     while True:
         trace = get_rollout(env,age,10)
         train(age,trace)
