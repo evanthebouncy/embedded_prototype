@@ -153,8 +153,8 @@ def get_stored_trace():
         x = obs_t[3]-obs_t[2]
         x = np.expand_dims(x,-1)
         x = np.transpose(x,(2,0,1))
-        # print(x.shape)
-        # print(action)
+        print(x.shape)
+        print(action)
         xs.append(x)
         actions.append(torch.tensor([0]) if action == 2 or action == 4 else torch.tensor([1]))
         print(reward)
@@ -266,6 +266,8 @@ def update_policy(exp):
 
 
 def main():
+    get_stored_trace()
+    return
     while True:
         trace = get_rollout(env,age,10)
         train(age,trace)
