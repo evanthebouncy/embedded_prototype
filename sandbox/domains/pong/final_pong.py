@@ -141,7 +141,8 @@ def train_large(agent,trace,epoch=10000,batch_size = 64):
             print(i)
         # idxes = [random.randint(0, 100-1) for _ in range(batch_size)]
         idxes = list(range(40))
-        train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
+        #train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
+        agent.nn.learn_once(states[idxes],actions[idxes],i%100==0)
 
 
 def get_stored_trace():
@@ -203,7 +204,7 @@ class CNN1(nn.Module):
 
         self.gamma = gamma
 
-    def forward(self, x):
+    def forward(self, x, log=False):
         #print(x.shape)
         x=self.conv1(x)
         x = F.relu(F.max_pool2d(x, 2))
@@ -211,7 +212,23 @@ class CNN1(nn.Module):
         x = x.view(-1, 6480)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        return F.softmax(x, dim=1)
+        return F.softmax(x, dim=1) if log == False else F.log_softmax(x,dim=1)
+
+    def learn_once(self, X_sub, Y_sub,pr=False):
+        X_sub = to_torch(X_sub, "float")
+        Y_sub = to_torch(Y_sub, "int")
+
+        # optimize
+        self.opt.zero_grad()
+        output = self.forward(X_sub,log=True)
+
+        loss = F.nll_loss(output, Y_sub)
+        loss.backward()
+        self.opt.step()
+        if pr:
+            print(loss)
+
+        return loss
 
 class Policy(nn.Module):
     def __init__(self):
