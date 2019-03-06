@@ -88,7 +88,7 @@ def get_rollout(env,agent,steps=100):
             states.append(state-ps)
 
             action = agent.act(state-ps)
-            actions.append(action.data[0])
+            actions.append(action.data.cpu().numpy()[0])
             ps = state
             # Step through environment using chosen action
             state, reward, done, _ = env.step(2 if action.data[0]==0 else 3)
@@ -111,7 +111,7 @@ def get_rollout(env,agent,steps=100):
     #rewards = (rewards - rewards.mean()) / (rewards.std() + np.finfo(np.float32).eps)
     return np.array(states),np.array(actions),np.array(rewards) # state is frame diff, action is 0 or 1, rewards are updated rewards
 
-def train(agent,trace):
+def train(agent,trace,pr=False):
     states,actions,rewards = trace
     states = np.array(states)
     actions = np.array(actions)
@@ -124,15 +124,18 @@ def train(agent,trace):
     # Update network weights
     optimizer.zero_grad()
     loss.backward()
+    if pr:
+        print(loss.data.cpu().numpy())
     optimizer.step()
 
-def train_large(agent,trace,epoch=1000,batch_size = 64):
+def train_large(agent,trace,epoch=10000,batch_size = 64):
     import random
     states, actions, rewards = trace
     for i in range(epoch):
-        print(i)
-        idxes = [random.randint(0, len(states)-1) for _ in range(batch_size)]
-        train(agent,(states[idxes],actions[idxes],rewards[idxes]))
+        if i % 100 == 0:
+            print(i)
+        idxes = [random.randint(0, 100-1) for _ in range(batch_size)]
+        train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
 
 
 def get_stored_trace():
@@ -271,8 +274,8 @@ def update_policy(exp):
 
 
 def main():
-    #trace = get_stored_trace()
-    #train_large(age,trace)
+    trace = get_stored_trace()
+    train_large(age,trace)
     while True:
         trace = get_rollout(env,age,10)
         train(age,trace)
