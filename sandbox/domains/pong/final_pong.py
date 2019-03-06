@@ -121,17 +121,16 @@ def train(agent,trace,pr=False):
     states = np.array(states)
     actions = np.array(actions)
     # rewards = to_torch(np.array(rewards),'float',True)
-    rewards = to_torch(np.ones(shape=rewards.shape))
+    rewards = to_torch(np.ones(shape=rewards.shape,dtype = float),'float',False)
     c = agent.act(states,actions)
     actions = to_torch(actions,'float',True)
     policy = c.log_prob(actions)
-    loss = (torch.sum(torch.mul(policy, Variable(rewards)).mul(-1), -1))
-
+    loss = - torch.sum(torch.mul(policy, Variable(rewards)))
     # Update network weights
     optimizer.zero_grad()
     loss.backward()
     if pr:
-        print(loss.data.cpu().numpy())
+        print(loss)
     optimizer.step()
 
 def train_large(agent,trace,epoch=10000,batch_size = 64):
@@ -200,7 +199,7 @@ class CNN1(nn.Module):
 
         self.fc1 = nn.Linear(6480, 50)
         self.fc2 = nn.Linear(50, out_dim)
-        self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
+        self.opt = torch.optim.Adam(self.parameters(), lr=0.01)
 
         self.gamma = gamma
 
