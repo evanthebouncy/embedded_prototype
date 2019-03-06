@@ -147,6 +147,8 @@ def get_stored_trace():
     xs = []
     goals = []
     actions = []
+    rewards = []
+
     for obs_t, action, reward, obs_tp1, done in data:
         # print(obs_t.shape)
         x = np.transpose(obs_t, (2, 0, 1))
@@ -158,13 +160,24 @@ def get_stored_trace():
         xs.append(x)
         actions.append(torch.tensor([0]) if action == 2 or action == 4 else torch.tensor([1]))
         print(reward)
-    return xs,actions,reward
+        rewards.append(reward)
+    update_reward(rewards,0,True)
+    return xs,actions,rewards
 
 
 
 
 
-def update_reward(reward,steps):
+def update_reward(reward,steps,all=False):
+    if all:
+        R = 0
+        for i in range(1, len(reward) + 1):
+            R = reward[-i] + policy.gamma * R
+            if reward[-i]!=0:
+                R = reward[-i]
+            reward[-i] = R
+        return
+
     R = 0
     for i in range(1,steps+1):
         R = reward[-i] + policy.gamma * R
