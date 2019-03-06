@@ -134,7 +134,8 @@ def train_large(agent,trace,epoch=10000,batch_size = 64):
     for i in range(epoch):
         if i % 100 == 0:
             print(i)
-        idxes = [random.randint(0, 100-1) for _ in range(batch_size)]
+        # idxes = [random.randint(0, 100-1) for _ in range(batch_size)]
+        idxes = list(range(40))
         train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
 
 
