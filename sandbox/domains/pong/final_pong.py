@@ -56,6 +56,11 @@ class agent(object):
         #    policy.policy_history = (c.log_prob(action))
         return action
 
+    # def learn(self, state, action):
+    # do supervised learning on state / action pairs
+
+    # def learn_pg(self, state, action, reward):
+
 def prepro(frame):
     #print(frame.shape)
 
@@ -115,7 +120,8 @@ def train(agent,trace,pr=False):
     states,actions,rewards = trace
     states = np.array(states)
     actions = np.array(actions)
-    rewards = to_torch(np.array(rewards),'float',True)
+    # rewards = to_torch(np.array(rewards),'float',True)
+    rewards = to_torch(np.ones(shape=rewards.shape))
     c = agent.act(states,actions)
     actions = to_torch(actions,'float',True)
     policy = c.log_prob(actions)
@@ -183,7 +189,7 @@ def update_reward(reward,steps,all=False):
 class CNN1(nn.Module):
 
     # init with (channel, height, width) and out_dim for classiication
-    def __init__(self, ch_h_w, out_dim, stop_criteria=(0.01, 1000, 120)):
+    def __init__(self, ch_h_w, out_dim):
         super(CNN1, self).__init__()
         self.name = "CNN1"
 
@@ -196,7 +202,6 @@ class CNN1(nn.Module):
         self.fc2 = nn.Linear(50, out_dim)
         self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
 
-        self.stop_criteria = stop_criteria
         self.gamma = gamma
 
     def forward(self, x):
