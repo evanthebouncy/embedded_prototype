@@ -87,16 +87,17 @@ def get_rollout(env,agent,steps=100):
             i=i+1
 
             state = prepro(state)
+            state = state[0]
             if ps is None:
                 ps = np.zeros_like(state,float)
+            states.append(np.array([ps,state]))
 
-            states.append(state-ps)
-
-            action = agent.act(state-ps)
+            action = agent.act(np.array([ps,state]))
             actions.append(action.data.cpu().numpy()[0])
             ps = state
             # Step through environment using chosen action
-            state, reward, done, _ = env.step(2 if action.data[0]==0 else 3)
+            state, reward, done, _ = env.step(action.data[0]+1) 
+            # 012 -> 123
             #state = prepro(state)
 
 
@@ -133,14 +134,14 @@ def train(agent,trace,pr=False):
         print(loss)
     optimizer.step()
 
-def train_large(agent,trace,epoch=10000,batch_size = 64):
+def train_large(agent,trace,epoch=50000,batch_size = 64):
     import random
     states, actions, rewards = trace
     for i in range(epoch):
         if i % 100 == 0:
             print(i)
-        # idxes = [random.randint(0, 100-1) for _ in range(batch_size)]
-        idxes = list(range(40))
+        idxes = [random.randint(0, len(states)-1) for _ in range(batch_size)]
+        #idxes = list(range(40))
         #train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
         agent.nn.learn_once(states[idxes],actions[idxes],i%100==0)
 
@@ -161,11 +162,19 @@ def get_stored_trace():
     for obs_t, action, reward, obs_tp1, done in data:
         #print(obs_t.shape) # (84,84,4)
         x = np.transpose(obs_t, (2, 0, 1))
-        x = x[3]-x[2]
-        x = np.expand_dims(x,-1)
-        x = np.transpose(x,(2,0,1))
+        x = x[2:4]
+        #x = np.expand_dims(x,-1)
+        #x = np.transpose(x,(2,0,1))
+        #print(x.shape)
         xs.append(x)
-        actions.append(torch.tensor([0]) if action == 2 or action == 4 else torch.tensor([1]))
+        if action == 0:
+            action = 1
+        elif action == 4:
+            action = 2
+        elif action == 5:
+            action = 3
+        action = action -1
+        actions.append(torch.tensor([action]))
         rewards.append(reward)
     update_reward(rewards,0,True)
     return np.array(xs),np.array(actions),np.array(rewards)
@@ -200,7 +209,7 @@ class CNN1(nn.Module):
 
         self.fc1 = nn.Linear(6480, 50)
         self.fc2 = nn.Linear(50, out_dim)
-        self.opt = torch.optim.Adam(self.parameters(), lr=0.01)
+        self.opt = torch.optim.Adam(self.parameters(), lr=0.0001)
 
         self.gamma = gamma
 
@@ -258,7 +267,7 @@ class Policy(nn.Module):
         )
         return model(x)
 
-policy = CNN1((1,84,84),2)
+policy = CNN1((2,84,84),3)
 policy.cuda()
 optimizer = optim.Adam(policy.parameters(), lr=learning_rate)
 
@@ -299,8 +308,10 @@ def main():
     trace = get_stored_trace()
     train_large(age,trace)
     while True:
-        trace = get_rollout(env,age,10)
-        train(age,trace)
+        trace = get_rollout(env,age,100)
+        #train(age,trace)
+        trace = get_stored_trace()
+        train_large(age,trace)
 
 
 
