@@ -13,7 +13,7 @@ import cv2
 env = gym.make("PongNoFrameskip-v4")
 env.seed(1); torch.manual_seed(1);
 
-learning_rate = 0.01
+learning_rate = 0.0001
 gamma = 0.99
 
 if torch.cuda.is_available():
@@ -124,11 +124,11 @@ def train(agent,trace,pr=False):
     # rewards = to_torch(np.array(rewards),'float',True)
     rewards = to_torch(np.ones(shape=rewards.shape,dtype = float),'float',False)
     c = agent.act(states,actions)
-    actions = to_torch(actions,'float',True)
+    actions = to_torch(actions,'float',False)
     policy = c.log_prob(actions)
-    loss = - torch.sum(torch.mul(policy, Variable(rewards)))
-    # Update network weights
     optimizer.zero_grad()
+    loss = -torch.sum(torch.mul(policy, Variable(rewards)))
+    # Update network weights
     loss.backward()
     if pr:
         print(loss)
@@ -137,19 +137,23 @@ def train(agent,trace,pr=False):
 def train_large(agent,trace,epoch=50000,batch_size = 64):
     import random
     states, actions, rewards = trace
+    print(len(states))
     for i in range(epoch):
         if i % 100 == 0:
             print(i)
-        idxes = [random.randint(0, len(states)-1) for _ in range(batch_size)]
-        #idxes = list(range(40))
-        #train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
-        agent.nn.learn_once(states[idxes],actions[idxes],i%100==0)
+        #idxes = [random.randint(1000, len(states)-100) for _ in range(batch_size)]
+        idxes = list(range(40))
+        train(agent,(states[idxes],actions[idxes],rewards[idxes]),i%100==0)
+        agent.nn.get_loss(states[idxes],actions[idxes],i%100==0)
+    idxes = list(range(len(states)-80,len(states)-10))
+    idxes = list(range(40))
+    agent.nn.get_loss(states[idxes],actions[idxes],True)
 
 
 def get_stored_trace():
     import pickle
     import random
-    path = 'baselines/inspected_memory'
+    path = 'baselines/inspected_large_memory'
 
     with open(path, 'rb') as f:
         data = pickle.load(f)
@@ -176,6 +180,8 @@ def get_stored_trace():
         action = action -1
         actions.append(torch.tensor([action]))
         rewards.append(reward)
+        if reward!=0: 
+            print(reward)
     update_reward(rewards,0,True)
     return np.array(xs),np.array(actions),np.array(rewards)
 
@@ -209,7 +215,7 @@ class CNN1(nn.Module):
 
         self.fc1 = nn.Linear(6480, 50)
         self.fc2 = nn.Linear(50, out_dim)
-        self.opt = torch.optim.Adam(self.parameters(), lr=0.0001)
+        self.opt = torch.optim.Adam(self.parameters(), lr=0.0001) # 0.0001 best for NLL loss
 
         self.gamma = gamma
 
@@ -222,6 +228,19 @@ class CNN1(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return F.softmax(x, dim=1) if log == False else F.log_softmax(x,dim=1)
+    def get_loss(self, X_sub, Y_sub,pr=False):
+        X_sub = to_torch(X_sub, "float")
+        Y_sub = to_torch(Y_sub, "int")
+
+        # optimize
+        output = self.forward(X_sub,log=True)
+
+        loss = F.nll_loss(output, Y_sub)
+        if pr:
+            print(loss)
+
+        return loss
+
 
     def learn_once(self, X_sub, Y_sub,pr=False):
         X_sub = to_torch(X_sub, "float")
@@ -307,11 +326,13 @@ def update_policy(exp):
 def main():
     trace = get_stored_trace()
     train_large(age,trace)
+    return
     while True:
         trace = get_rollout(env,age,100)
+        break
         #train(age,trace)
-        trace = get_stored_trace()
-        train_large(age,trace)
+        #trace = get_stored_trace()
+        #train_large(age,trace)
 
 
 
