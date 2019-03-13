@@ -8,9 +8,13 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.distributions import Categorical
+from gym import spaces
+from collections import deque
+
 import cv2
 
 env = gym.make("PongNoFrameskip-v4")
+
 env.seed(1); torch.manual_seed(1);
 
 learning_rate = 0.0001
@@ -29,7 +33,38 @@ else:
 
 
 # state is the difference
+class FrameStack(gym.Wrapper):
+    def __init__(self, env, k):
+        """Stack k last frames.
 
+        Returns lazy array, which is much more memory efficient.
+
+        See Also
+        --------
+        baselines.common.atari_wrappers.LazyFrames
+        """
+        gym.Wrapper.__init__(self, env)
+        self.k = k
+        self.frames = deque([], maxlen=k)
+        shp = env.observation_space.shape
+        self.observation_space = spaces.Box(low=0, high=255, shape=(shp[:-1] + (shp[-1] * k,)), dtype=env.observation_space.dtype)
+
+    def reset(self):
+        ob = self.env.reset()
+        for _ in range(self.k):
+            self.frames.append(ob)
+        return self._get_ob()
+
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
+        ob=prepro(ob)[0]
+        self.frames.append(ob)
+        return self._get_ob(), reward, done, info
+
+    def _get_ob(self):
+        assert len(self.frames) == self.k
+        return np.array(list(self.frames))
+env = FrameStack(env,4)
 
 class agent(object):
     def __init__(self,nn):
@@ -86,13 +121,13 @@ def get_rollout(env,agent,steps=100):
         for time in range(100000):
             i=i+1
 
-            state = prepro(state)
-            state = state[0]
+            #state = prepro(state)
+            #state = state[0]
             if ps is None:
                 ps = np.zeros_like(state,float)
-            states.append(np.array([ps,state]))
+            states.append(state)
 
-            action = agent.act(np.array([ps,state]))
+            action = agent.act(state)
             actions.append(action.data.cpu().numpy()[0])
             ps = state
             # Step through environment using chosen action
@@ -166,7 +201,7 @@ def get_stored_trace():
     for obs_t, action, reward, obs_tp1, done in data:
         #print(obs_t.shape) # (84,84,4)
         x = np.transpose(obs_t, (2, 0, 1))
-        x = x[2:4]
+        x = x[0:4]
         #x = np.expand_dims(x,-1)
         #x = np.transpose(x,(2,0,1))
         #print(x.shape)
@@ -286,7 +321,7 @@ class Policy(nn.Module):
         )
         return model(x)
 
-policy = CNN1((2,84,84),3)
+policy = CNN1((4,84,84),3)
 policy.cuda()
 optimizer = optim.Adam(policy.parameters(), lr=learning_rate)
 
