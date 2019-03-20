@@ -120,8 +120,12 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     # Start total timer
     tfirststart = time.time()
-
+    print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
+    print('n_updates',nupdates)
+    print('saving memory')
+    memory = []
+    losses = []
     for update in range(1, nupdates+1):
         assert nbatch % nminibatches == 0
         # Start timer
@@ -142,6 +146,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
         # Here what we're going to do is for each minibatch calculate the loss and append it.
         mblossvals = []
+        #memory.append((obs,returns,masks,actions,values,neglogpacs))
         if states is None: # nonrecurrent version
             # Index of each element of batch_size
             # Create the indices array
@@ -188,6 +193,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             logger.logkv("explained_variance", float(ev))
             logger.logkv('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]))
             logger.logkv('eplenmean', safemean([epinfo['l'] for epinfo in epinfobuf]))
+            losses.append((update,safemean([epinfo['l'] for epinfo in epinfobuf])))
             if eval_env is not None:
                 logger.logkv('eval_eprewmean', safemean([epinfo['r'] for epinfo in eval_epinfobuf]) )
                 logger.logkv('eval_eplenmean', safemean([epinfo['l'] for epinfo in eval_epinfobuf]) )
@@ -202,6 +208,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             savepath = osp.join(checkdir, '%.5i'%update)
             print('Saving to', savepath)
             model.save(savepath)
+    import pickle
+    with open('ppo2_losses','wb') as f:
+        pickle.dump(losses,f)
+
     return model
 # Avoid division error when calculate the mean (in our case if epinfo is empty returns np.nan, not return an error)
 def safemean(xs):
