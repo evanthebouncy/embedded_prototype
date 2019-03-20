@@ -18,6 +18,41 @@ def constfn(val):
         return val
     return f
 
+def pretrain(model):
+    import pickle
+    import numpy as np
+    path = '../ppo2_memory'
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    obs_ = []
+    actions_ = []
+    tot = len(data)
+    i = 0
+
+    for obs, returns, masks, actions, values, neglogpacs in data:
+        i = i + 1
+        print(i,tot)
+
+        # Index of each element of batch_size
+        # Create the indices array
+        nbatch = 5120
+        nbatch_train = 1280
+        lrnow = 0.0001
+        cliprangenow = 0.1
+        noptepochs = 10
+        inds = np.arange(nbatch)
+        for _ in range(noptepochs):
+            # Randomize the indexes
+            np.random.shuffle(inds)
+            # 0 to batch_size with batch_train_size step
+            for start in range(0, nbatch, nbatch_train):
+                end = start + nbatch_train
+                mbinds = inds[start:end]
+                slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
+                print(model.train(lrnow, cliprangenow, *slices))
+
+
+
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
@@ -119,11 +154,14 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         eval_epinfobuf = deque(maxlen=100)
 
     # Start total timer
+
+    print('pretraining')
+    pretrain(model)
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
     print('n_updates',nupdates)
-    print('saving memory')
+    #print('saving memory')
     memory = []
     losses = []
     for update in range(1, nupdates+1):
