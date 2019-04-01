@@ -21,7 +21,7 @@ def constfn(val):
 def pretrain(model):
     import pickle
     import numpy as np
-    path = '../ppo2_memory'
+    path = 'ppo2_memory'
     with open(path, 'rb') as f:
         data = pickle.load(f)
     obs_ = []
@@ -155,8 +155,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     # Start total timer
 
-    print('pretraining')
-    pretrain(model)
+    #print('pretraining')
+    #pretrain(model)
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
@@ -231,7 +231,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             logger.logkv("explained_variance", float(ev))
             logger.logkv('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]))
             logger.logkv('eplenmean', safemean([epinfo['l'] for epinfo in epinfobuf]))
-            losses.append((update,safemean([epinfo['l'] for epinfo in epinfobuf])))
+            losses.append((update,safemean([epinfo['r'] for epinfo in epinfobuf])))
             if eval_env is not None:
                 logger.logkv('eval_eprewmean', safemean([epinfo['r'] for epinfo in eval_epinfobuf]) )
                 logger.logkv('eval_eplenmean', safemean([epinfo['l'] for epinfo in eval_epinfobuf]) )
