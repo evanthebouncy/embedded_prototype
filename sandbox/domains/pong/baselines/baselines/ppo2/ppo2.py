@@ -51,6 +51,53 @@ def pretrain(model):
                 slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                 print(model.train(lrnow, cliprangenow, *slices))
 
+def pretrain_subset(model,subset=None,size = 0.1):
+    import pickle
+    import numpy as np
+    path = 'ppo2_memory'
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    obs_ = []
+    actions_ = []
+
+    returns_ = []
+    masks_ = []
+    values_ = []
+    neglogpacs_ = []
+    for obs, returns, masks, actions, values, neglogpacs in data:
+        obs_.append(obs)
+        returns_.append(returns)
+        masks_.append(masks_)
+
+        actions_.append(actions)
+        values_.append(values)
+        neglogpacs_.append(neglogpacs)
+    obs_ = np.vstack(obs_)
+    returns_ = np.hstack(returns_)
+    masks_ = np.hstack(masks_)
+    actions_ = np.hstack(actions_)
+    values_ = np.hstack(values_)
+    neglogpacs_ = np.hstack(neglogpacs_)
+    print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
+
+    tot = obs_.shape[0]
+    size = tot*size
+    inds = np.arange(tot)
+    np.random.shuffle(inds)
+
+
+    nbatch_train = 1280
+    lrnow = 0.0001
+    cliprangenow = 0.1
+    noptepochs = 10
+    for _ in range(noptepochs):
+        for start in range(0, size, nbatch_train):
+            end = start + nbatch_train
+            mbinds = inds[start:end]
+            slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
+            print(model.train(lrnow, cliprangenow, *slices))
+
+
 
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
@@ -155,8 +202,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     # Start total timer
 
-    #print('pretraining')
-    #pretrain(model)
+    print('pretraining')
+    pretrain_subset(model)
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
@@ -247,7 +294,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             print('Saving to', savepath)
             model.save(savepath)
     import pickle
-    with open('ppo2_losses','wb') as f:
+    with open('ppo2_losses_random_subset','wb') as f:
         pickle.dump(losses,f)
 
     return model
