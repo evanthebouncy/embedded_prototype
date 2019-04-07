@@ -54,7 +54,7 @@ def pretrain(model):
 def pretrain_subset(model,subset=None,size = 0.1):
     import pickle
     import numpy as np
-    path = 'ppo2_memory'
+    path = '../ppo2_memory'
     with open(path, 'rb') as f:
         data = pickle.load(f)
     obs_ = []
@@ -67,7 +67,7 @@ def pretrain_subset(model,subset=None,size = 0.1):
     for obs, returns, masks, actions, values, neglogpacs in data:
         obs_.append(obs)
         returns_.append(returns)
-        masks_.append(masks_)
+        masks_.append(masks)
 
         actions_.append(actions)
         values_.append(values)
@@ -81,7 +81,7 @@ def pretrain_subset(model,subset=None,size = 0.1):
     print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
 
     tot = obs_.shape[0]
-    size = tot*size
+    size = int(tot*size)
     inds = np.arange(tot)
     np.random.shuffle(inds)
 
