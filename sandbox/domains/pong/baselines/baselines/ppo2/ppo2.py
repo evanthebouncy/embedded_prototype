@@ -55,8 +55,15 @@ def pretrain_subset(model,subset=None,size = 0.1):
     import pickle
     import numpy as np
     path = '../ppo2_memory'
+    path2 = '../pong_tiers_b.p'
     with open(path, 'rb') as f:
         data = pickle.load(f)
+    with open(path2,'rb') as f:
+        idx = pickle.load(f)
+    rm = []
+
+
+
     obs_ = []
     actions_ = []
 
@@ -81,9 +88,18 @@ def pretrain_subset(model,subset=None,size = 0.1):
     print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
 
     tot = obs_.shape[0]
-    size = int(tot*size)
-    inds = np.arange(tot)
-    np.random.shuffle(inds)
+    for i in range(len(data[0]),0,-1):
+        rm.extend(data[0][i])
+        if tot-len(rm)<100000:
+            break
+    inds = np.arange(tot).tolist()
+    rm=set(rm)
+    inds = [i for i in inds if i not in rm]
+    size = len(inds)
+    inds = np.array(inds)
+
+
+    #np.random.shuffle(inds)
 
 
     nbatch_train = 1280
