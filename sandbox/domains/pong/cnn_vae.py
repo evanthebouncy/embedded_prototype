@@ -186,7 +186,7 @@ if __name__ == '__main__':
     print ('embedding ppo2 now')
     #X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
     #X_tr = np.transpose(X_tr,(0,3,1,2))
-    X_tr = np.random.random((10000,4,84,84))
+    X_tr = np.random.random((100,4,84,84))
 
     emb_dim = 32
 
