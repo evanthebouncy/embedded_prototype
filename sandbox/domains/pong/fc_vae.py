@@ -1,4 +1,4 @@
-
+import pickle
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,6 +12,7 @@ import random
 
 Conv_W = 3
 CC, LL, WW = 32, 6, 6
+clw = 81920
 
 
 def to_torch(x, dtype="float", req=False):
@@ -34,7 +35,7 @@ class CNN(nn.Module):
         self.fc_mu = nn.Linear(100, 32)
         self.fc_logvar = nn.Linear(100, 32)
 
-        self.dense_dec = nn.Linear(100, CC * LL * WW)
+        self.dense_dec = nn.Linear(100,clw)
 
         self.deconv3 = torch.nn.ConvTranspose2d(32, 16, Conv_W)
         self.deconv2 = torch.nn.ConvTranspose2d(16, 8, Conv_W)
@@ -46,6 +47,7 @@ class CNN(nn.Module):
         self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
 
     def forward(self, x):
+        print(x.shape)
         # conv1
         x = F.relu(self.conv1(x))
         size1 = x.size()
@@ -64,7 +66,7 @@ class CNN(nn.Module):
 
         # =================================================
         # reached the middle layer, some dense
-        x = x.view(-1, CC * LL * WW)
+        x = x.view(-1,CC * LL * WW)
         # x = x.view(-1,8*60*60)
         x = torch.relu(self.dense_enc(x))
 
@@ -182,9 +184,9 @@ def save_X_Y(filename, X, Y):
 
 if __name__ == '__main__':
     print ('embedding ppo2 now')
-    from data import gen_train_data, gen_test_data, WSampler
-    X_tr, Y_tr = get_X_Y('/baselines/baselines/ppo2_memory_obs_actions')
-    X_tr = np.transpose(X_tr,(0,3,1,2))
+    #X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
+    #X_tr = np.transpose(X_tr,(0,3,1,2))
+    X_tr = np.random.random((10000,4,84,84))
 
     emb_dim = 32
 
@@ -192,11 +194,12 @@ if __name__ == '__main__':
 
     X_size = X_tr.shape[1]
     vae = CNN(4)
+    vae.cuda()
 
     vae.learn(X_tr, learn_iter = 100000)
 
     # compute the embedded features
     X_tr_emb = vae.embed(X_tr)
 
-    data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
-    pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
+    #data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
+    #pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
