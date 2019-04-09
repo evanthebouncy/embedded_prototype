@@ -11,8 +11,7 @@ import random
 
 
 Conv_W = 3
-CC, LL, WW = 32, 6, 6
-clw = 81920
+CC, LL, WW = 32, 8, 8
 
 
 def to_torch(x, dtype="float", req=False):
@@ -35,7 +34,7 @@ class CNN(nn.Module):
         self.fc_mu = nn.Linear(100, 32)
         self.fc_logvar = nn.Linear(100, 32)
 
-        self.dense_dec = nn.Linear(100,clw)
+        self.dense_dec = nn.Linear(32, CC * LL * WW)
 
         self.deconv3 = torch.nn.ConvTranspose2d(32, 16, Conv_W)
         self.deconv2 = torch.nn.ConvTranspose2d(16, 8, Conv_W)
@@ -47,7 +46,6 @@ class CNN(nn.Module):
         self.opt = torch.optim.Adam(self.parameters(), lr=0.001)
 
     def forward(self, x):
-        print(x.shape)
         # conv1
         x = F.relu(self.conv1(x))
         size1 = x.size()
@@ -63,6 +61,7 @@ class CNN(nn.Module):
         x = F.relu(self.conv3(x))
         size3 = x.size()
         x, idx3 = self.pool(x)
+
 
         # =================================================
         # reached the middle layer, some dense
@@ -142,7 +141,7 @@ class CNN(nn.Module):
             # optimize
             losses.append(self.learn_once(X_sub).data.cpu().numpy())
 
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 print(i, losses[len(losses) - 1])
                 #img_orig = X_sub[0].detach().cpu().numpy()
                 #img_rec = self(X_sub)[0].detach().cpu().numpy()
@@ -186,15 +185,13 @@ if __name__ == '__main__':
     print ('embedding ppo2 now')
     #X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
     #X_tr = np.transpose(X_tr,(0,3,1,2))
-    X_tr = np.random.random((100,4,84,84))
+    X_tr = np.ones((1000,4,84,84))
 
     emb_dim = 32
 
     import pickle
 
-    X_size = X_tr.shape[1]
-    vae = CNN(4)
-    vae.cuda()
+    vae = CNN(4).cuda()
 
     vae.learn(X_tr, learn_iter = 100000)
 
