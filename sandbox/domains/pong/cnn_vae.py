@@ -179,13 +179,11 @@ def save_X_Y(filename, X, Y):
         pickle.dump((X, Y), f, protocol=4)
     return
 
-
-
 if __name__ == '__main__':
     print ('embedding ppo2 now')
-    #X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
-    #X_tr = np.transpose(X_tr,(0,3,1,2))
-    X_tr = np.ones((1000,4,84,84))
+    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
+    X_tr = np.transpose(X_tr,(0,3,1,2))
+    #X_tr = np.ones((1000,4,84,84))
 
     emb_dim = 32
 
@@ -198,5 +196,5 @@ if __name__ == '__main__':
     # compute the embedded features
     X_tr_emb = vae.embed(X_tr)
 
-    #data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
-    #pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
+    data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
+    pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
