@@ -179,6 +179,17 @@ def save_X_Y(filename, X, Y):
         pickle.dump((X, Y), f, protocol=4)
     return
 
+
+def project(X, vae,  loop=10000):
+
+    X_new = []
+    for i in range(0, X.shape[0], loop):
+        X_new.append(vae.embed(X[i:i + loop]))
+    X_new = np.vstack(X_new)
+
+    return X_new
+
+
 if __name__ == '__main__':
     print ('embedding ppo2 now')
     X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
