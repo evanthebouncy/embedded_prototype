@@ -126,7 +126,13 @@ class CNN(nn.Module):
 
     def load(self, loc):
         self.load_state_dict(torch.load(loc))
-
+    def draw(self, img,filename):
+        from PIL import Image
+        print(img.shape)
+        im = Image.fromarray(img)
+        if im.mode != 'RGB':
+            im = im.convert('RGB')
+        im.save(filename)
     def learn(self, X, learn_iter=1000):
         losses = []
         # for i in range(99999999999):
@@ -141,24 +147,16 @@ class CNN(nn.Module):
             # optimize
             losses.append(self.learn_once(X_sub).data.cpu().numpy())
 
-            if i % 100 == 0:
+            if i % 1000 == 0:
                 print(i, losses[len(losses) - 1])
-                #img_orig = X_sub[0].detach().cpu().numpy()
-                #img_rec = self(X_sub)[0].detach().cpu().numpy()
-
+                img_orig = X_sub[0].detach().cpu().numpy()
+                img_rec = self(X_sub)[0].detach().cpu().numpy()
+                self.draw(img_orig[0],'orig_img.jpeg')
+                self.draw(img_rec[0],'rec_img.jpeg')
                 #draw(img_orig, 'orig_img.png')
                 #draw(img_rec, 'rec_img.png')
 
 
-def project(X, dim=32, loop=10000):
-    T = random_projection.GaussianRandomProjection(n_components=dim)
-
-    X_new = []
-    for i in range(0, X.shape[0], loop):
-        X_new.append(T.fit_transform(X[i:i + loop]))
-    X_new = np.vstack(X_new)
-
-    return X_new
 
 
 def flatten(X):
@@ -180,7 +178,7 @@ def save_X_Y(filename, X, Y):
     return
 
 
-def project(X, vae,  loop=10000):
+def project(X, vae,  loop=1):
 
     X_new = []
     for i in range(0, X.shape[0], loop):
@@ -202,10 +200,10 @@ if __name__ == '__main__':
 
     vae = CNN(4).cuda()
 
-    vae.learn(X_tr, learn_iter = 100000)
+    vae.learn(X_tr, learn_iter = 5000)
 
     # compute the embedded features
-    X_tr_emb = vae.embed(X_tr)
-
+    #X_tr_emb = vae.embed(X_tr)
+    X_tr_emb = project(X_tr,vae)
     data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
     pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
