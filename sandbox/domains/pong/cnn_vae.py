@@ -167,8 +167,8 @@ def flatten(X):
 
 def get_X_Y(filename):
     with open(filename, 'rb') as f:
-        X = pickle.load(f)
-        Y = pickle.load(f)
+        X,Y = pickle.load(f)
+        #Y = pickle.load(f)
     return X, Y
 
 
@@ -190,7 +190,11 @@ def project(X, vae,  loop=1):
 
 if __name__ == '__main__':
     print ('embedding ppo2 now')
-    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
+    
+    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions_small')
+    
+    #save_X_Y('baselines/baselines/ppo2_memory_obs_actions_small',X_tr[:100],Y_tr[:100])
+    #print('saved')
     X_tr = np.transpose(X_tr,(0,3,1,2))
     #X_tr = np.ones((1000,4,84,84))
 
