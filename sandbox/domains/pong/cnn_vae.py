@@ -168,7 +168,6 @@ def flatten(X):
 def get_X_Y(filename):
     with open(filename, 'rb') as f:
         X,Y = pickle.load(f)
-        #Y = pickle.load(f)
     return X, Y
 
 
@@ -179,10 +178,11 @@ def save_X_Y(filename, X, Y):
 
 
 def project(X, vae,  loop=1):
-
     X_new = []
     for i in range(0, X.shape[0], loop):
-        X_new.append(vae.embed(X[i:i + loop]))
+        X_new.append(vae.embed(X[i:i + loop]).cpu().detach().numpy())
+
+    print (X_new)
     X_new = np.vstack(X_new)
 
     return X_new
@@ -209,5 +209,6 @@ if __name__ == '__main__':
     # compute the embedded features
     #X_tr_emb = vae.embed(X_tr)
     X_tr_emb = project(X_tr,vae)
+
     data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
     pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
