@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     vae = CNN(4).cuda()
 
-    vae.learn(X_tr, learn_iter = 5000)
+    # vae.learn(X_tr, learn_iter = 5000)
 
     # compute the embedded features
     #X_tr_emb = vae.embed(X_tr)
