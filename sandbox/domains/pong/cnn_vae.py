@@ -6,13 +6,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 import random
-
-
-
+from tqdm import tqdm
 
 Conv_W = 3
-CC, LL, WW = 32, 8, 8
-
+CC, LL, WW = 32, 21, 21
+EMB_DIM = 32
+PAD = 2 * (int((Conv_W -1) / 2), )
 
 def to_torch(x, dtype="float", req=False):
     tor_type = torch.cuda.LongTensor if dtype == "int" else torch.cuda.FloatTensor
@@ -24,21 +23,21 @@ class CNN(nn.Module):
     def __init__(self, n_chan):
         super(CNN, self).__init__()
         # 1 channel input to 2 channel output of first time print and written
-        self.conv1 = nn.Conv2d(n_chan, 8, Conv_W)
-        self.conv2 = nn.Conv2d(8, 16, Conv_W)
-        self.conv3 = nn.Conv2d(16, 32, Conv_W)
+        self.conv1 = nn.Conv2d(n_chan, 8, Conv_W, padding = PAD)
+        self.conv2 = nn.Conv2d(8, 16, Conv_W, padding = PAD)
+        self.conv3 = nn.Conv2d(16, 32, Conv_W, padding = PAD)
 
         self.dense_enc = nn.Linear(CC * LL * WW, 100)
 
         # variational bits
-        self.fc_mu = nn.Linear(100, 32)
-        self.fc_logvar = nn.Linear(100, 32)
+        self.fc_mu = nn.Linear(100, EMB_DIM)
+        self.fc_logvar = nn.Linear(100, EMB_DIM)
 
-        self.dense_dec = nn.Linear(32, CC * LL * WW)
+        self.dense_dec = nn.Linear(EMB_DIM, CC * LL * WW)
 
-        self.deconv3 = torch.nn.ConvTranspose2d(32, 16, Conv_W)
-        self.deconv2 = torch.nn.ConvTranspose2d(16, 8, Conv_W)
-        self.deconv1 = torch.nn.ConvTranspose2d(8, n_chan, Conv_W)
+        self.deconv3 = torch.nn.ConvTranspose2d(32, 16, Conv_W, padding = PAD)
+        self.deconv2 = torch.nn.ConvTranspose2d(16, 8, Conv_W, padding = PAD)
+        self.deconv1 = torch.nn.ConvTranspose2d(8, n_chan, Conv_W, padding = PAD)
 
         self.pool = nn.MaxPool2d(2, return_indices=True)
         self.unpool = nn.MaxUnpool2d(2)
@@ -49,7 +48,7 @@ class CNN(nn.Module):
         # conv1
         x = F.relu(self.conv1(x))
         size1 = x.size()
-        x, idx1 = self.pool(x)
+        # x, idx1 = self.pool(x)
 
         # conv2
         x = F.relu(self.conv2(x))
@@ -62,10 +61,9 @@ class CNN(nn.Module):
         size3 = x.size()
         x, idx3 = self.pool(x)
 
-
         # =================================================
         # reached the middle layer, some dense
-        x = x.view(-1,CC * LL * WW)
+        x = x.view(-1, CC * LL * WW)
         # x = x.view(-1,8*60*60)
         x = torch.relu(self.dense_enc(x))
 
@@ -85,21 +83,16 @@ class CNN(nn.Module):
         x = F.relu(self.deconv2(x))
 
         # deconv1
-        x = self.unpool(x, idx1, size1)
-        x = torch.sigmoid(self.deconv1(x))
-        return x
+        # x = self.unpool(x, idx1, size1)
+        x = self.deconv1(x)
+        # x = torch.sigmoid(self.deconv1(x))
+        return x, mu, logvar
 
     # def decode(self, x):
 
     def embed(self, x):
-        x = to_torch(x)
-        x = F.relu(self.conv1(x))
-        size1 = x.size()
-        x = F.relu(self.conv2(x))
-        size2 = x.size()
-        x = x.view(-1, CC * LL * WW)
-        x = torch.tanh(self.dense_enc(x))
-        return x
+        _, mu, _ = self(x)
+        return mu
 
     # VAE MAGIC =================
 
@@ -107,12 +100,17 @@ class CNN(nn.Module):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
+
     def learn_once(self, imgs):
-        img_rec = self(imgs)
+        img_rec, mu, logvar = self(imgs)
 
         self.opt.zero_grad()
-        # compute all the cost LOL
-        loss = ((img_rec - imgs) ** 2).mean()
+
+        L2_LOSS = ((img_rec - imgs) ** 2).mean()
+        KLD_LOSS = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+        # print (L2_LOSS, KLD_LOSS)
+        loss = L2_LOSS + KLD_LOSS * 0.01
         loss.backward()
 
         for param in self.parameters():
@@ -128,15 +126,15 @@ class CNN(nn.Module):
         self.load_state_dict(torch.load(loc))
     def draw(self, img,filename):
         from PIL import Image
-        print(img.shape)
         im = Image.fromarray(img)
         if im.mode != 'RGB':
             im = im.convert('RGB')
         im.save(filename)
+
     def learn(self, X, learn_iter=1000):
         losses = []
         # for i in range(99999999999):
-        for i in range(learn_iter):
+        for i in tqdm(range(learn_iter)):
             # load in the datas
             indices = sorted(random.sample(range(len(X)), 40))
             # indices = list(range(40))
@@ -150,14 +148,15 @@ class CNN(nn.Module):
             if i % 1000 == 0:
                 print(i, losses[len(losses) - 1])
                 img_orig = X_sub[0].detach().cpu().numpy()
-                img_rec = self(X_sub)[0].detach().cpu().numpy()
-                self.draw(img_orig[0],'orig_img.jpeg')
-                self.draw(img_rec[0],'rec_img.jpeg')
-                #draw(img_orig, 'orig_img.png')
-                #draw(img_rec, 'rec_img.png')
-
-
-
+                img_rec = self(X_sub)[0][0].detach().cpu().numpy()
+                self.draw(img_orig[0] * 256 ,'drawings/orig_img0.png')
+                self.draw(img_orig[1] * 256 ,'drawings/orig_img1.png')
+                self.draw(img_orig[2] * 256 ,'drawings/orig_img2.png')
+                self.draw(img_orig[3] * 256 ,'drawings/orig_img3.png')
+                self.draw(img_rec[0]  * 256 , 'drawings/rec_img0.png')
+                self.draw(img_rec[1]  * 256 , 'drawings/rec_img1.png')
+                self.draw(img_rec[2]  * 256 , 'drawings/rec_img2.png')
+                self.draw(img_rec[3]  * 256 , 'drawings/rec_img3.png')
 
 def flatten(X):
     s = X.shape
@@ -198,13 +197,18 @@ if __name__ == '__main__':
     X_tr = np.transpose(X_tr,(0,3,1,2))
     #X_tr = np.ones((1000,4,84,84))
 
-    emb_dim = 32
+    print ("binarize the image a bit ? ")
+    X_tr = X_tr / 256
+    X_tr[X_tr > 0.5] = 1.0
+    X_tr[X_tr <= 0.5] = 0.0
+
+    emb_dim = EMB_DIM
 
     import pickle
 
     vae = CNN(4).cuda()
 
-    # vae.learn(X_tr, learn_iter = 5000)
+    vae.learn(X_tr, learn_iter = 50000000)
 
     # compute the embedded features
     #X_tr_emb = vae.embed(X_tr)
