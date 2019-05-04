@@ -15,6 +15,18 @@ from .condense import condense_once
 import argparse
 
 # perform condensor algorithm and save to save_path
+
+def get_newXY(X,Y,path):
+    with open(path,'rb') as f:
+        idx = pickle.load(f)
+    rm = []
+    for i in range(len(idx[0])):
+        print(len(idx[0][i]))
+        rm.extend(idx[0][i])
+    X_sub, Y_sub = np.delete(X, rm, 0), np.delete(Y, rm)
+    return X_sub,Y_sub,idx[0],idx[1]
+
+
 def condensor(args):
     import time
     import pickle
@@ -43,6 +55,8 @@ def condensor(args):
     index_rankings = []
     losses = []
     X, Y = X_tr_emb, Y_tr
+    X,Y,index_rankings,losses = get_newXY(X,Y)
+    print(X.shape,Y.shape,X_tr_emb.shape)
     for i in tqdm(range(int(estimate_iter + 100))):
         X, Y, rm_idx, loss = condense_once(X, Y, X_tr_emb, Y_tr, throw_frac, require_loss)
         print("iteration ", i, " cur size ", len(Y), 'loss ',loss)
