@@ -55,7 +55,7 @@ def pretrain_subset(model,subset=None,size = 0.1):
     import pickle
     import numpy as np
     path = '../ppo2_memory'
-    path2 = '../pong_tiers_b.p'
+    path2 = '../pong_tiers_32.p'
     with open(path, 'rb') as f:
         data = pickle.load(f)
     with open(path2,'rb') as f:
@@ -88,9 +88,10 @@ def pretrain_subset(model,subset=None,size = 0.1):
     print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
 
     tot = obs_.shape[0]
-    for i in range(len(data[0]),0,-1):
-        rm.extend(data[0][i])
-        if tot-len(rm)<100000:
+    for i in range(len(idx[0])-1,0,-1):
+        print(len(idx[0][i]))
+        rm.extend(idx[0][i])
+        if tot-len(rm)<50000:
             break
     inds = np.arange(tot).tolist()
     rm=set(rm)
@@ -109,7 +110,11 @@ def pretrain_subset(model,subset=None,size = 0.1):
     for _ in range(noptepochs):
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
-            mbinds = inds[start:end]
+            end = min(size,end)
+            if end-start == nbatch_train:
+                mbinds = inds[start:end]
+            else:
+                mbinds = inds[end-nbatch_train:end]
             slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
             print(model.train(lrnow, cliprangenow, *slices))
 
@@ -310,7 +315,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             print('Saving to', savepath)
             model.save(savepath)
     import pickle
-    with open('ppo2_losses_random_subset','wb') as f:
+    with open('ppo2_losses_subset_selection_50000','wb') as f:
         pickle.dump(losses,f)
 
     return model
