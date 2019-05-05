@@ -91,7 +91,7 @@ class CNN(nn.Module):
     # def decode(self, x):
 
     def embed(self, x):
-        _, mu, _ = self(x)
+        _, mu, _ = self(to_torch(x))
         return mu
 
     # VAE MAGIC =================
@@ -147,8 +147,8 @@ class CNN(nn.Module):
 
             if i % 1000 == 0:
                 print(i, losses[len(losses) - 1])
-                img_orig = X_sub[0].detach().cpu().numpy()
-                img_rec = self(X_sub)[0][0].detach().cpu().numpy()
+                img_orig = X_sub[30].detach().cpu().numpy()
+                img_rec = self(X_sub)[0][30].detach().cpu().numpy()
                 self.draw(img_orig[0] * 256 ,'drawings/orig_img0.png')
                 self.draw(img_orig[1] * 256 ,'drawings/orig_img1.png')
                 self.draw(img_orig[2] * 256 ,'drawings/orig_img2.png')
@@ -157,6 +157,18 @@ class CNN(nn.Module):
                 self.draw(img_rec[1]  * 256 , 'drawings/rec_img1.png')
                 self.draw(img_rec[2]  * 256 , 'drawings/rec_img2.png')
                 self.draw(img_rec[3]  * 256 , 'drawings/rec_img3.png')
+                img_orig = X_sub[35].detach().cpu().numpy()
+                img_rec = self(X_sub)[0][35].detach().cpu().numpy()
+                self.draw(img_orig[0] * 256 ,'drawings/orig_img10.png')
+                self.draw(img_orig[1] * 256 ,'drawings/orig_img11.png')
+                self.draw(img_orig[2] * 256 ,'drawings/orig_img12.png')
+                self.draw(img_orig[3] * 256 ,'drawings/orig_img13.png')
+                self.draw(img_rec[0]  * 256 , 'drawings/rec_img10.png')
+                self.draw(img_rec[1]  * 256 , 'drawings/rec_img11.png')
+                self.draw(img_rec[2]  * 256 , 'drawings/rec_img12.png')
+                self.draw(img_rec[3]  * 256 , 'drawings/rec_img13.png')
+
+
 
 def flatten(X):
     s = X.shape
@@ -166,7 +178,8 @@ def flatten(X):
 
 def get_X_Y(filename):
     with open(filename, 'rb') as f:
-        X,Y = pickle.load(f)
+        X = pickle.load(f)
+        Y = pickle.load(f)
     return X, Y
 
 
@@ -176,12 +189,12 @@ def save_X_Y(filename, X, Y):
     return
 
 
-def project(X, vae,  loop=1):
+def project(X, vae,  loop=40):
     X_new = []
     for i in range(0, X.shape[0], loop):
         X_new.append(vae.embed(X[i:i + loop]).cpu().detach().numpy())
 
-    print (X_new)
+    #print (X_new)
     X_new = np.vstack(X_new)
 
     return X_new
@@ -190,29 +203,39 @@ def project(X, vae,  loop=1):
 if __name__ == '__main__':
     print ('embedding ppo2 now')
     
-    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions_small')
+    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
     
     #save_X_Y('baselines/baselines/ppo2_memory_obs_actions_small',X_tr[:100],Y_tr[:100])
     #print('saved')
     X_tr = np.transpose(X_tr,(0,3,1,2))
     #X_tr = np.ones((1000,4,84,84))
+    print(np.sum(X_tr))
+    print(np.amax(X_tr))
 
     print ("binarize the image a bit ? ")
-    X_tr = X_tr / 256
-    X_tr[X_tr > 0.5] = 1.0
-    X_tr[X_tr <= 0.5] = 0.0
+    #X_tr = X_tr / 256
+    loop = 1000
+    #for i in range(0,X_tr.shape[0],loop):
+    #    X_tr[i:min(i+loop,X_tr.shape[0])]=X_tr[i:min(i+loop,X_tr.shape[0])]/256
+    X_tr[X_tr <= 128] = 0.0
+    X_tr[X_tr > 128] = 1.0
+    print(np.sum(X_tr))
+
 
     emb_dim = EMB_DIM
 
     import pickle
 
     vae = CNN(4).cuda()
-
-    vae.learn(X_tr, learn_iter = 50000000)
+    #vae.draw(X_tr[13][0],'drawings/t1.png')
+    #vae.draw(X_tr[130][0],'drawings/t2.png')
+    #vae.draw(X_tr[1300][0],'drawings/t3.png')
+    
+    vae.learn(X_tr, learn_iter = 50000)
 
     # compute the embedded features
     #X_tr_emb = vae.embed(X_tr)
     X_tr_emb = project(X_tr,vae)
 
-    data_embed_path = 'pong_emb_{}.p'.format(emb_dim)
+    data_embed_path = 'pong_emb2_{}.p'.format(emb_dim)
     pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )
