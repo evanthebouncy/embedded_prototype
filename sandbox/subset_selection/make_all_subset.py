@@ -15,6 +15,12 @@ from .condense import condense_once
 import argparse
 
 # perform condensor algorithm and save to save_path
+
+def make_unique(X,Y):
+    d = {}
+    for i,item in enumerate(X):
+        
+
 def condensor(args):
     import time
     import pickle
@@ -43,6 +49,7 @@ def condensor(args):
     index_rankings = []
     losses = []
     X, Y = X_tr_emb, Y_tr
+    X,Y,index_rankings,losses = make_unique(X,Y)
     for i in tqdm(range(int(estimate_iter + 100))):
         X, Y, rm_idx, loss = condense_once(X, Y, X_tr_emb, Y_tr, throw_frac, require_loss)
         print("iteration ", i, " cur size ", len(Y), 'loss ',loss)
