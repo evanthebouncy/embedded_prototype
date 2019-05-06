@@ -1,14 +1,19 @@
 # Running the PPO experiments
     
-go to baselines.
+go to first /baselines
     
 # train the expert model
 
-    python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --num_timesteps=8e6 --save_path=ppo2_humanoid
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong 'raw'
     
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong 'raw'
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --load_path=ppo2_pong 'memory'
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=useless 'pretrain_whole'
+# use the expert model to generate a set of (obs, returns, masks, actions, values, neglogpacs)
+
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1e6 --load_path=ppo2_pong 'memory'
+    
+# use the whole memory to train a model
+    
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=useless 'pretrain_whole'
+    
     # go to baselines
     # use baselines/inspector.py to transform the memory to two X and Y
     # go to pong
