@@ -7,6 +7,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import random
 from tqdm import tqdm
+import argparse
 
 Conv_W = 3
 CC, LL, WW = 32, 21, 21
@@ -201,9 +202,14 @@ def project(X, vae,  loop=40):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("load_path")
+    parser.add_argument("save_path")
+    args = parser.parse_args()
+
     print ('embedding ppo2 now')
     
-    X_tr, Y_tr = get_X_Y('baselines/baselines/ppo2_memory_obs_actions')
+    X_tr, Y_tr = get_X_Y(args.load_path)#'baselines/baselines/ppo2_memory_obs_actions')
     
     #save_X_Y('baselines/baselines/ppo2_memory_obs_actions_small',X_tr[:100],Y_tr[:100])
     #print('saved')
@@ -237,5 +243,5 @@ if __name__ == '__main__':
     #X_tr_emb = vae.embed(X_tr)
     X_tr_emb = project(X_tr,vae)
 
-    data_embed_path = 'pong_emb2_{}.p'.format(emb_dim)
+    data_embed_path = args.save_path#'pong_emb2_{}.p'.format(emb_dim)
     pickle.dump((X_tr_emb,Y_tr), open( data_embed_path, "wb" ) )

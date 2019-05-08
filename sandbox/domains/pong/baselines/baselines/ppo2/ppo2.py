@@ -51,7 +51,7 @@ def pretrain(model,path):
                 slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                 print(model.train(lrnow, cliprangenow, *slices))
 
-def pretrain_subset(model,path,path2):
+def pretrain_subset_raw(model,path,path2):
     import pickle
     import numpy as np
 
@@ -106,6 +106,66 @@ def pretrain_subset(model,path,path2):
     lrnow = 0.0001
     cliprangenow = 0.1
     noptepochs = 10
+    for _ in range(noptepochs):
+        for start in range(0, size, nbatch_train):
+            end = start + nbatch_train
+            end = min(size,end)
+            if end-start == nbatch_train:
+                mbinds = inds[start:end]
+            else:
+                mbinds = inds[end-nbatch_train:end]
+            slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
+            print(model.train(lrnow, cliprangenow, *slices))
+
+def pretrain_subset(model,path,path2):
+    import pickle
+    import numpy as np
+
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    with open(path2,'rb') as f:
+        inds = pickle.load(f)
+
+
+
+
+    obs_ = []
+    actions_ = []
+
+    returns_ = []
+    masks_ = []
+    values_ = []
+    neglogpacs_ = []
+    for obs, returns, masks, actions, values, neglogpacs in data:
+        obs_.append(obs)
+        returns_.append(returns)
+        masks_.append(masks)
+
+        actions_.append(actions)
+        values_.append(values)
+        neglogpacs_.append(neglogpacs)
+    obs_ = np.vstack(obs_)
+    returns_ = np.hstack(returns_)
+    masks_ = np.hstack(masks_)
+    actions_ = np.hstack(actions_)
+    values_ = np.hstack(values_)
+    neglogpacs_ = np.hstack(neglogpacs_)
+    print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
+
+    tot = obs_.shape[0]
+
+
+    size = inds.shape[0]
+    print("training with subset of size ",size)
+
+
+    #np.random.shuffle(inds)
+
+
+    nbatch_train = 1280
+    lrnow = 0.0001
+    cliprangenow = 0.1
+    noptepochs = int(tot/size)
     for _ in range(noptepochs):
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
@@ -233,10 +293,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
 
     '''
-    mode = 'raw' # 'raw', 'memory', 'pretrain_whole', 'pretrain_subset', 'pretrain_random'
-    pickle_path = '../ppo2_memory'
-    memory_path = '../pong_tiers_32.p'
-    loss_path = 'ppo2_losses_subset_selection_50000'
+    mode = 'raw' # 'raw', 'memory', 'pretrain'
+    pickle_path = '../pong_tiers_32.p'  #subset index pickle
+    memory_path = '../ppo2_memory'  # the memory pickle
+    loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
     # go to baselines.
     # run python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --num_timesteps=8e6 --save_path=ppo2_humanoid
     # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong 'raw'
@@ -292,15 +352,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         eval_epinfobuf = deque(maxlen=100)
 
     # Start total timer
-    if mode == 'pretrain_subset':
+    if mode == 'pretrain':
         print('pretraining with subset of pickle',pickle_path)
         pretrain_subset(model,memory_path,pickle_path)
     if mode == 'pretrain_random':
         print('pretraining randomly with subset of pickle',pickle_path)
         pretrain_subset(model,memory_path)
-    if mode == 'pretrain':
-        print('pretraining with whole subset')
-        pretrain(model,memory_path)
+
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
