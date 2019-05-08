@@ -298,6 +298,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     #pickle_path = '../pong_tiers_32.p'  #subset index pickle
     #memory_path = '../ppo2_memory'  # the memory pickle
     #loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
+    print('mode is',mode)
     
     # go to baselines.
     # run python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --num_timesteps=8e6 --save_path=ppo2_humanoid
@@ -366,7 +367,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     nupdates = total_timesteps//nbatch
     print('n_updates',nupdates)
     if mode == 'memory':
-        print('saving memory')
+        print('saving memory at',memory_path)
     memory = []
     losses = []
     for update in range(1, nupdates+1):
