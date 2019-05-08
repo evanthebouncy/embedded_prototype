@@ -238,7 +238,8 @@ def pretrain_random_subset(model, path, frac=0.1):
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
-            save_interval=0, load_path=None, model_fn=None, **network_kwargs):
+            save_interval=0, load_path=None, model_fn=None, mode = 'raw', pickle_path = None,
+          memory_path=None,loss_path=None,**network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
 
@@ -293,10 +294,11 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
 
     '''
-    mode = 'raw' # 'raw', 'memory', 'pretrain'
-    pickle_path = '../pong_tiers_32.p'  #subset index pickle
-    memory_path = '../ppo2_memory'  # the memory pickle
-    loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
+    #mode = 'raw' # 'raw', 'memory', 'pretrain'
+    #pickle_path = '../pong_tiers_32.p'  #subset index pickle
+    #memory_path = '../ppo2_memory'  # the memory pickle
+    #loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
+    
     # go to baselines.
     # run python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --num_timesteps=8e6 --save_path=ppo2_humanoid
     # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong 'raw'
