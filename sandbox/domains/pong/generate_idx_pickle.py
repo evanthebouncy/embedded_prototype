@@ -42,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument("load_path")
 
     args = parser.parse_args()
+    args.tot_size= int(args.tot_size)
+    args.size=int(args.size)
     print ("cmd line args as follows :")
     print("type",args.type)
     print ("tot_size", args.tot_size)
