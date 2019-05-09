@@ -209,6 +209,7 @@ def main(args):
 
     if args.save_path is not None and rank == 0:
         save_path = osp.expanduser(args.save_path)
+        print ("saved model at ", save_path)
         model.save(save_path)
 
     if args.play:

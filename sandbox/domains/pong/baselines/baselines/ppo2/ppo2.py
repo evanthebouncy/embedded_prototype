@@ -18,105 +18,6 @@ def constfn(val):
         return val
     return f
 
-def pretrain(model,path):
-    import pickle
-    import numpy as np
-
-    with open(path, 'rb') as f:
-        data = pickle.load(f)
-    obs_ = []
-    actions_ = []
-    tot = len(data)
-    i = 0
-
-    for obs, returns, masks, actions, values, neglogpacs in data:
-        i = i + 1
-        print(i,tot)
-
-        # Index of each element of batch_size
-        # Create the indices array
-        nbatch = 5120
-        nbatch_train = 1280
-        lrnow = 0.0001
-        cliprangenow = 0.1
-        noptepochs = 10
-        inds = np.arange(nbatch)
-        for _ in range(noptepochs):
-            # Randomize the indexes
-            np.random.shuffle(inds)
-            # 0 to batch_size with batch_train_size step
-            for start in range(0, nbatch, nbatch_train):
-                end = start + nbatch_train
-                mbinds = inds[start:end]
-                slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
-                print(model.train(lrnow, cliprangenow, *slices))
-
-def pretrain_subset_raw(model,path,path2):
-    import pickle
-    import numpy as np
-
-    with open(path, 'rb') as f:
-        data = pickle.load(f)
-    with open(path2,'rb') as f:
-        idx = pickle.load(f)
-    rm = []
-
-
-
-    obs_ = []
-    actions_ = []
-
-    returns_ = []
-    masks_ = []
-    values_ = []
-    neglogpacs_ = []
-    for obs, returns, masks, actions, values, neglogpacs in data:
-        obs_.append(obs)
-        returns_.append(returns)
-        masks_.append(masks)
-
-        actions_.append(actions)
-        values_.append(values)
-        neglogpacs_.append(neglogpacs)
-    obs_ = np.vstack(obs_)
-    returns_ = np.hstack(returns_)
-    masks_ = np.hstack(masks_)
-    actions_ = np.hstack(actions_)
-    values_ = np.hstack(values_)
-    neglogpacs_ = np.hstack(neglogpacs_)
-    print(obs_.shape,returns_.shape,masks_.shape,actions_.shape,values_.shape,neglogpacs_.shape)
-
-    tot = obs_.shape[0]
-    for i in range(len(idx[0])-1,0,-1):
-        print(len(idx[0][i]))
-        rm.extend(idx[0][i])
-        if tot-len(rm)<50000:
-            break
-    inds = np.arange(tot).tolist()
-    rm=set(rm)
-    inds = [i for i in inds if i not in rm]
-    size = len(inds)
-    inds = np.array(inds)
-
-
-    #np.random.shuffle(inds)
-
-
-    nbatch_train = 1280
-    lrnow = 0.0001
-    cliprangenow = 0.1
-    noptepochs = 10
-    for _ in range(noptepochs):
-        for start in range(0, size, nbatch_train):
-            end = start + nbatch_train
-            end = min(size,end)
-            if end-start == nbatch_train:
-                mbinds = inds[start:end]
-            else:
-                mbinds = inds[end-nbatch_train:end]
-            slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
-            print(model.train(lrnow, cliprangenow, *slices))
-
 def pretrain_subset(model,path,path2):
     import pickle
     import numpy as np
@@ -125,9 +26,6 @@ def pretrain_subset(model,path,path2):
         data = pickle.load(f)
     with open(path2,'rb') as f:
         inds = pickle.load(f)
-
-
-
 
     obs_ = []
     actions_ = []
@@ -158,9 +56,7 @@ def pretrain_subset(model,path,path2):
     size = inds.shape[0]
     print("training with subset of size ",size)
 
-
     #np.random.shuffle(inds)
-
 
     nbatch_train = 1280
     lrnow = 0.0001
@@ -176,64 +72,6 @@ def pretrain_subset(model,path,path2):
                 mbinds = inds[end-nbatch_train:end]
             slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
             print(model.train(lrnow, cliprangenow, *slices))
-
-
-def pretrain_random_subset(model, path, frac=0.1):
-    import pickle
-    import numpy as np
-
-    with open(path, 'rb') as f:
-        data = pickle.load(f)
-
-    rm = []
-
-    obs_ = []
-    actions_ = []
-
-    returns_ = []
-    masks_ = []
-    values_ = []
-    neglogpacs_ = []
-    for obs, returns, masks, actions, values, neglogpacs in data:
-        obs_.append(obs)
-        returns_.append(returns)
-        masks_.append(masks)
-
-        actions_.append(actions)
-        values_.append(values)
-        neglogpacs_.append(neglogpacs)
-    obs_ = np.vstack(obs_)
-    returns_ = np.hstack(returns_)
-    masks_ = np.hstack(masks_)
-    actions_ = np.hstack(actions_)
-    values_ = np.hstack(values_)
-    neglogpacs_ = np.hstack(neglogpacs_)
-    print(obs_.shape, returns_.shape, masks_.shape, actions_.shape, values_.shape, neglogpacs_.shape)
-
-    tot = obs_.shape[0]
-
-    inds = np.arange(tot)
-
-
-
-    np.random.shuffle(inds)
-    size = tot*frac
-
-    nbatch_train = 1280
-    lrnow = 0.0001
-    cliprangenow = 0.1
-    noptepochs = 10
-    for _ in range(noptepochs):
-        for start in range(0, size, nbatch_train):
-            end = start + nbatch_train
-            end = min(size, end)
-            if end - start == nbatch_train:
-                mbinds = inds[start:end]
-            else:
-                mbinds = inds[end - nbatch_train:end]
-            slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
-            print(model.train(lrnow, cliprangenow, *slices))
-
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
@@ -298,21 +136,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     #pickle_path = '../pong_tiers_32.p'  #subset index pickle
     #memory_path = '../ppo2_memory'  # the memory pickle
     #loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
-    print('mode is',mode)
+    assert mode in ["train_expert", "collect_supervision", "evaluate_pretrain"]
     
-    # go to baselines.
-    # run python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --num_timesteps=8e6 --save_path=ppo2_humanoid
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong 'raw'
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --load_path=ppo2_pong 'memory'
-    # run python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=useless 'pretrain_whole'
-    # go to baselines
-    # use baselines/inspector.py to transform the memory to two X and Y
-    # go to pong
-    # use cnn_vae.py to embed the memory into data_embed_path
-    # go to sandbox
-    # run python -m subset_selection.make_all_subset_batches tiers ./domains/pong/pong_emb_32.p ./domains/pong/pong_tiers_32.p
-    # go to baselines.
-    # run the baselines.run files again. 
     set_global_seeds(seed)
 
     if isinstance(lr, float): lr = constfn(lr)
@@ -355,19 +180,16 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         eval_epinfobuf = deque(maxlen=100)
 
     # Start total timer
-    if mode == 'pretrain':
+    if mode == 'evaluate_pretrain':
         print('pretraining with subset of pickle',pickle_path)
         pretrain_subset(model,memory_path,pickle_path)
-    if mode == 'pretrain_random':
-        print('pretraining randomly with subset of pickle',pickle_path)
-        pretrain_subset(model,memory_path)
 
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
     nupdates = total_timesteps//nbatch
     print('n_updates',nupdates)
-    if mode == 'memory':
-        print('saving memory at',memory_path)
+    if mode == 'collect_supervision':
+        print('saving supervision memory path is ',memory_path)
     memory = []
     losses = []
     for update in range(1, nupdates+1):
@@ -390,7 +212,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
         # Here what we're going to do is for each minibatch calculate the loss and append it.
         mblossvals = []
-        if mode == 'memory':
+        if mode == 'collect_supervision':
             memory.append((obs,returns,masks,actions,values,neglogpacs))
         if states is None: # nonrecurrent version
             # Index of each element of batch_size
@@ -454,13 +276,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             print('Saving to', savepath)
             model.save(savepath)
     import pickle
-    if mode == 'memory':
+    if mode == 'collect_supervision':
         with open(memory_path, 'wb') as f:
             pickle.dump(memory, f)
-    else:
+            print ("saved memory at ", memory_path)
+    if loss_path is not None:
         with open(loss_path, 'wb') as f:
             pickle.dump(losses, f)
-
 
     return model
 # Avoid division error when calculate the mean (in our case if epinfo is empty returns np.nan, not return an error)

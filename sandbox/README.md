@@ -2,11 +2,16 @@
     
 go to first /baselines
     
-# train the expert model. Save the model at baselines/ppo2_pong
+# train the expert model
 
-    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong --mode=raw
+to accomplish this we set --mode=train\_expert, and specify a save\_path
+
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong --mode=train_expert
     
-# use the expert model to generate a set of (obs, returns, masks, actions, values, neglogpacs). Save memory at pong/ppo2_memory
+# use the expert model to generate a set of supervision memory
+
+to accomplish this set --mode=collect\_supervision
+and we specify a memory path as well
 
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1e6 --load_path=ppo2_pong --mode=memory --memory_path=../ppo2_memory
    
