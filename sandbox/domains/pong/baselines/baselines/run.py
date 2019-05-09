@@ -3,7 +3,6 @@ import multiprocessing
 import os.path as osp
 import gym
 from collections import defaultdict
-import tensorflow as tf
 import numpy as np
 
 from baselines.common.vec_env.vec_video_recorder import VecVideoRecorder
@@ -14,6 +13,7 @@ from baselines import logger
 from importlib import import_module
 
 from baselines.common.vec_env.vec_normalize import VecNormalize
+import tensorflow as tf
 
 try:
     from mpi4py import MPI
