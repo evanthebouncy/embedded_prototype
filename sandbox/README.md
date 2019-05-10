@@ -6,6 +6,8 @@ go to first /baselines
 
 to accomplish this we set --mode=train\_expert, and specify a save\_path
 
+note: if save\_path is specified, the model will be saved. otherwise it wont
+
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=../pong_data/ppo2_pong_model --mode=train_expert
     
 # use the expert model to generate a set of supervision memory
@@ -13,8 +15,7 @@ to accomplish this we set --mode=train\_expert, and specify a save\_path
 to accomplish this set --mode=collect\_supervision
 and we specify a memory path as well
 
-    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1e6 --load_path=ppo2_pong --mode=memory --memory_path=../ppo2_memory
-   
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1e5 --load_path=../pong_data/ppo2_pong_model --mode=collect_supervision --memory_path=../pong_data/ppo2_memory
 
 # go to baselines. Save XYs in baselines/baselines/ppo2_memory_obs_actions
 
@@ -43,7 +44,10 @@ and we specify a memory path as well
     
 # use the memory to train a model. Set the mode to "pretrain" in ppo2.py at baselines/baselines/ppo2/ppo2.py
 Rename the pickle_path, and the loss_path depending on your need.
-    
+
+    # this
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1000 --mode=evaluate_pretrain --index_path=../pong_data/idx_all.p --memory_path=../pong_data/ppo2_memory --loss_path=../pong_data/result_loss_idx_all
+
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=useless --mode=pretrain --pickle_path=../pong_idx_whole.p --memory_path=../ppo2_memory --loss_path=ppo2_losses_with_whole_subset
     
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=useless --mode=pretrain --pickle_path=../pong_idx_random.p --memory_path=../ppo2_memory --loss_path=ppo2_losses_with_random_subset
