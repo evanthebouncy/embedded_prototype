@@ -194,6 +194,9 @@ def main(args):
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
 
+    if extra_args["mode"] != "train_expert":
+        assert args.save_path is None, "U gonna write-over the model!"
+
     if args.extra_import is not None:
         import_module(args.extra_import)
 

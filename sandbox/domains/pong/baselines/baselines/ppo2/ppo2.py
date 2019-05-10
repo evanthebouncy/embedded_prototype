@@ -18,13 +18,13 @@ def constfn(val):
         return val
     return f
 
-def pretrain_subset(model,path,path2):
+def pretrain_subset(model,memory_path,index_path):
     import pickle
     import numpy as np
 
-    with open(path, 'rb') as f:
+    with open(memory_path, 'rb') as f:
         data = pickle.load(f)
-    with open(path2,'rb') as f:
+    with open(index_path,'rb') as f:
         inds = pickle.load(f)
 
     obs_ = []
@@ -76,7 +76,7 @@ def pretrain_subset(model,path,path2):
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
-            save_interval=0, load_path=None, model_fn=None, mode = 'raw', pickle_path = None,
+            save_interval=0, load_path=None, model_fn=None, mode = 'raw', index_path = None,
           memory_path=None,loss_path=None,**network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
@@ -133,7 +133,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     '''
     #mode = 'raw' # 'raw', 'memory', 'pretrain'
-    #pickle_path = '../pong_tiers_32.p'  #subset index pickle
+    #index_path = '../pong_tiers_32.p'  #subset index pickle
     #memory_path = '../ppo2_memory'  # the memory pickle
     #loss_path = 'ppo2_losses_subset_selection_50000'  # the loss pickle which we use to plot the loss curve
     assert mode in ["train_expert", "collect_supervision", "evaluate_pretrain"]
@@ -181,8 +181,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     # Start total timer
     if mode == 'evaluate_pretrain':
-        print('pretraining with subset of pickle',pickle_path)
-        pretrain_subset(model,memory_path,pickle_path)
+        print('pretraining with subset of pickle',index_path)
+        pretrain_subset(model,memory_path,index_path)
 
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
@@ -277,6 +277,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             model.save(savepath)
     import pickle
     if mode == 'collect_supervision':
+        assert len(memory) > 0, "memory is empty !"
         with open(memory_path, 'wb') as f:
             pickle.dump(memory, f)
             print ("saved memory at ", memory_path)
