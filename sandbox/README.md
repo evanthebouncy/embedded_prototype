@@ -6,7 +6,7 @@ go to first /baselines
 
 to accomplish this we set --mode=train\_expert, and specify a save\_path
 
-    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=ppo2_pong --mode=train_expert
+    python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=../pong_data/ppo2_pong_model --mode=train_expert
     
 # use the expert model to generate a set of supervision memory
 
