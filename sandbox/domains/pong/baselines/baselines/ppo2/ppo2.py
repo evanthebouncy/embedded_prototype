@@ -58,7 +58,8 @@ def pretrain_subset(model,memory_path,index_path):
 
     #np.random.shuffle(inds)
 
-    nbatch_train = 1280
+    # nbatch_train = 1280
+    nbatch_train = model.nbatch_train
     lrnow = 0.0001
     cliprangenow = 0.1
     noptepochs = int(tot/size)
