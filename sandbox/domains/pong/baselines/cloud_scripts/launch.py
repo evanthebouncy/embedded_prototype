@@ -18,7 +18,7 @@ def run_remote_cmd(instance_name, folder_path, script_path):
     """
     ret = \
     f"""
-gcloud compute ssh --zone=us-east1-b yewenpu@{instance_name} --command='cd {folder_path}; git checkout {script_path}; git pull; touch lalalala; chmod 777 {script_path}; {script_path}'
+gcloud compute ssh --zone=us-east1-b yewenpu@{instance_name} --command='source ~/.bashrc; cd {folder_path}; git checkout {script_path}; git pull; touch lalalala; chmod 777 {script_path}; {script_path}'
     """
     return ret
 
