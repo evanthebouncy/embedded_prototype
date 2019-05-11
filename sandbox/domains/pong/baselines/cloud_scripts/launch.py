@@ -40,6 +40,6 @@ if __name__ == "__main__":
     # print (make_instance(snapshot_name, instance_name))
 
     folder_path = "/home/yewenpu/embedded_prototype/sandbox/domains/pong/baselines"
-    script_path = "./scripts/run.sh" 
+    script_path = "./cloud_scripts/run.sh" 
     run_experiment = run_remote_cmd(instance_name, folder_path, script_path)
     os.system(run_experiment)
