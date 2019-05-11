@@ -281,10 +281,11 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         assert len(memory) > 0, "memory is empty !"
         with open(memory_path, 'wb') as f:
             pickle.dump(memory, f)
-            print ("saved memory at ", memory_path)
+            print ("saved expert supervision memory at ", memory_path)
     if loss_path is not None:
         with open(loss_path, 'wb') as f:
             pickle.dump(losses, f)
+            print ("loss dumped at ", loss_path)
 
     return model
 # Avoid division error when calculate the mean (in our case if epinfo is empty returns np.nan, not return an error)
