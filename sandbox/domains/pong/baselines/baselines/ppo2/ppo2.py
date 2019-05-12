@@ -55,7 +55,7 @@ def pretrain_subset(model,memory_path,index_path):
 
 
     size = inds.shape[0]
-    if len(size) == 0:
+    if size == 0:
         print ("no pretraining here")
         return
     print("training with subset of size ",size)
