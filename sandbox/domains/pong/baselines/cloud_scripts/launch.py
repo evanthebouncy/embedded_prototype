@@ -10,6 +10,14 @@ gcloud compute --project=capgroup instances create {instance_name} --zone=us-eas
     """
     return ret
 
+def make_horse(horse_name):
+    ret = \
+    f"""
+gcloud compute --project "capgroup" disks create "{horse_name}" --size "100" --zone "us-east1-c" --source-snapshot "pong-expert-memory" --type "pd-standard"
+
+gcloud compute --project=capgroup instances create {horse_name} --zone=us-east1-c --machine-type=custom-1-51200-ext --subnet=default --network-tier=PREMIUM --maintenance-policy=TERMINATE --service-account=881379218043-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --accelerator=type=nvidia-tesla-k80,count=1 --tags=http-server,https-server --disk=name=horse-pong-pretrain-all,device-name=horse-pong-pretrain-all,mode=rw,boot=yes,auto-delete=yes
+    """
+
 def run_remote_cmd(instance_name, folder_path, script_path):
     """
     instance_name : instance-1
@@ -18,7 +26,7 @@ def run_remote_cmd(instance_name, folder_path, script_path):
     """
     ret = \
     f"""
-gcloud compute ssh --zone=us-east1-b yewenpu@{instance_name} --command='source .bashrc; cd {folder_path}; git checkout {script_path}; git pull; touch lalalala; chmod 777 {script_path}; {script_path}'
+gcloud compute ssh --zone=us-east1-b yewenpu@{instance_name} --command='export PATH=/opt/anaconda3/bin:$PATH; cd {folder_path}; git checkout {script_path}; git pull; touch lalalala; chmod 777 {script_path}; {script_path}'
     """
     return ret
 

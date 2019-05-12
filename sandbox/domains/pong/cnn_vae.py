@@ -132,12 +132,12 @@ class CNN(nn.Module):
             im = im.convert('RGB')
         im.save(filename)
 
-    def learn(self, X, learn_iter=1000):
+    def learn(self, X, learn_iter=1000, batch_size=40):
         losses = []
         # for i in range(99999999999):
         for i in tqdm(range(learn_iter)):
             # load in the datas
-            indices = sorted(random.sample(range(len(X)), 40))
+            indices = sorted(random.sample(range(len(X)), batch_size))
             # indices = list(range(40))
             X_sub = X[indices]
             # convert to proper torch forms
@@ -169,20 +169,15 @@ class CNN(nn.Module):
                 self.draw(img_rec[2]  * 256 , 'drawings/rec_img12.png')
                 self.draw(img_rec[3]  * 256 , 'drawings/rec_img13.png')
 
-
-
 def flatten(X):
     s = X.shape
     s_new = (s[0], s[1] * s[2] * s[3])
     return np.reshape(X, s_new)
 
-
 def get_X_Y(filename):
     with open(filename, 'rb') as f:
-        X = pickle.load(f)
-        Y = pickle.load(f)
-    return X, Y
-
+        X,Y = pickle.load(f)
+    return X,Y
 
 def save_X_Y(filename, X, Y):
     with open(filename, 'wb') as f:
@@ -197,14 +192,27 @@ def project(X, vae,  loop=40):
 
     #print (X_new)
     X_new = np.vstack(X_new)
+    print (X_new.shape)
+    print (np.max(X_new))
+    print (np.min(X_new))
+    # add small noise to break it up
+    X_new = X_new + np.random.uniform(-1e-8, 1e-8, X_new.shape)
+    print (np.max(X_new))
+    print (np.min(X_new))
 
     return X_new
 
 
 if __name__ == '__main__':
+    """
+    learn_iter working with 50000
+    batch_size working with 40
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("load_path")
     parser.add_argument("save_path")
+    parser.add_argument("learn_iter", type=int)
+    parser.add_argument("batch_size", type=int)
     args = parser.parse_args()
 
     print ('embedding ppo2 now')
@@ -214,30 +222,23 @@ if __name__ == '__main__':
     #save_X_Y('baselines/baselines/ppo2_memory_obs_actions_small',X_tr[:100],Y_tr[:100])
     #print('saved')
     X_tr = np.transpose(X_tr,(0,3,1,2))
-    #X_tr = np.ones((1000,4,84,84))
-    print(np.sum(X_tr))
-    print(np.amax(X_tr))
 
     print ("binarize the image a bit ? ")
     #X_tr = X_tr / 256
-    loop = 1000
-    #for i in range(0,X_tr.shape[0],loop):
-    #    X_tr[i:min(i+loop,X_tr.shape[0])]=X_tr[i:min(i+loop,X_tr.shape[0])]/256
     X_tr[X_tr <= 128] = 0.0
     X_tr[X_tr > 128] = 1.0
-    print(np.sum(X_tr))
-
 
     emb_dim = EMB_DIM
 
     import pickle
-
+    print ("learning iter", args.learn_iter)
+    print ("batch_size ", args.batch_size)
     vae = CNN(4).cuda()
     #vae.draw(X_tr[13][0],'drawings/t1.png')
     #vae.draw(X_tr[130][0],'drawings/t2.png')
     #vae.draw(X_tr[1300][0],'drawings/t3.png')
     
-    vae.learn(X_tr, learn_iter = 50000)
+    vae.learn(X_tr, args.learn_iter, args.batch_size)
 
     # compute the embedded features
     #X_tr_emb = vae.embed(X_tr)
