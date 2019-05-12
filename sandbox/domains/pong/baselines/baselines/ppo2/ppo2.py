@@ -11,6 +11,7 @@ try:
 except ImportError:
     MPI = None
 from baselines.ppo2.runner import Runner
+import tqdm
 
 
 def constfn(val):
