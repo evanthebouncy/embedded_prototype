@@ -60,12 +60,12 @@ def pretrain_subset(model,memory_path,index_path):
 
     # nbatch_train = 1280
     nbatch_train = model.nbatch_train
+    # try to overfit bit harder
     lrnow = 0.001
     cliprangenow = 0.1
     # noptepochs = int(tot/size)
-    # try to overfit bit harder
     noptepochs = int(tot/size) * 100
-    for _ in range(noptepochs):
+    for _ in tqdm.tqdm(range(noptepochs)):
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
             end = min(size,end)
@@ -74,7 +74,8 @@ def pretrain_subset(model,memory_path,index_path):
             else:
                 mbinds = inds[end-nbatch_train:end]
             slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
-            print(model.train(lrnow, cliprangenow, *slices))
+            the_stats = model.train(lrnow, cliprangenow, *slices)
+        print (the_stats)
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
