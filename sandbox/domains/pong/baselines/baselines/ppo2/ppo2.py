@@ -60,9 +60,11 @@ def pretrain_subset(model,memory_path,index_path):
 
     # nbatch_train = 1280
     nbatch_train = model.nbatch_train
-    lrnow = 0.0001
+    lrnow = 0.001
     cliprangenow = 0.1
-    noptepochs = int(tot/size)
+    # noptepochs = int(tot/size)
+    # try to overfit bit harder
+    noptepochs = int(tot/size) * 100
     for _ in range(noptepochs):
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
