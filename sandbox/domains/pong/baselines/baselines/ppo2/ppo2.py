@@ -64,10 +64,8 @@ def pretrain_subset(model,memory_path,index_path):
 
     # nbatch_train = 1280
     nbatch_train = model.nbatch_train
-    # try to overfit bit harder
-    lrnow = 0.001
+    lrnow = 0.0001
     cliprangenow = 0.1
-    # noptepochs = int(tot/size)
     noptepochs = int(tot/size)
     for _ in tqdm.tqdm(range(noptepochs)):
         for start in range(0, size, nbatch_train):
