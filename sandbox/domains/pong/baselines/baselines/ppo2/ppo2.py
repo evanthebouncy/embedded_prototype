@@ -27,6 +27,7 @@ def pretrain_subset(model,memory_path,index_path):
         data = pickle.load(f)
     with open(index_path,'rb') as f:
         inds = pickle.load(f)
+        np.random.shuffle(inds)
 
     obs_ = []
     actions_ = []
