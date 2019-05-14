@@ -85,7 +85,7 @@ def pretrain_subset(model,memory_path,index_path):
             else:
                 mbinds = inds[end-nbatch_train:end]
             slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
-            the_stats = model.train(lrnow, cliprangenow, *slices)
+            the_stats = model.train(lrnow, cliprangenow, *slices, supervised=True)
             ob_batch = obs_[mbinds]
             act_batch = actions_[mbinds]
             print ("train batch acc ", train_batch_acc(model, ob_batch, act_batch))

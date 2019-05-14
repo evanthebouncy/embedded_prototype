@@ -88,7 +88,10 @@ class Model(object):
         # Total loss
         loss = pg_loss - entropy * ent_coef + vf_loss * vf_coef
 
-        # UPDATE THE PARAMETERS USING LOSS
+        # Supervised Loss
+        supervised_loss = pg_loss + vf_loss * vf_coef
+
+        # UPDATE THE PARAMETERS USING LOSS (NORMAL)
         # 1. Get the model parameters
         params = tf.trainable_variables('ppo2_model')
         # 2. Build our trainer
@@ -96,6 +99,7 @@ class Model(object):
             self.trainer = MpiAdamOptimizer(MPI.COMM_WORLD, learning_rate=LR, epsilon=1e-5)
         else:
             self.trainer = tf.train.AdamOptimizer(learning_rate=LR, epsilon=1e-5)
+
         # 3. Calculate the gradients
         grads_and_var = self.trainer.compute_gradients(loss, params)
         grads, var = zip(*grads_and_var)
@@ -110,6 +114,24 @@ class Model(object):
         self.grads = grads
         self.var = var
         self._train_op = self.trainer.apply_gradients(grads_and_var)
+
+        # UPDATE THE PARAMETERS USING LOSS (SUPERVISED) =======================
+        # 3. Calculate the gradients
+        sup_grads_and_var = self.trainer.compute_gradients(supervised_loss, params)
+        sup_grads, sup_var = zip(*sup_grads_and_var)
+
+        if max_grad_norm is not None:
+            # Clip the gradients (normalize)
+            sup_grads, _sup_grad_norm = tf.clip_by_global_norm(sup_grads, max_grad_norm)
+        sup_grads_and_var = list(zip(sup_grads, sup_var))
+        # zip aggregate each gradient with parameters associated
+        # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
+
+        self.sup_grads = sup_grads
+        self._sup_train_op = self.trainer.apply_gradients(sup_grads_and_var)
+        # =====================================================================
+
+
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
         self.stats_list = [pg_loss, vf_loss, entropy, approxkl, clipfrac]
 
@@ -128,7 +150,7 @@ class Model(object):
         if MPI is not None:
             sync_from_root(sess, global_variables) #pylint: disable=E1101
 
-    def train(self, lr, cliprange, obs, returns, masks, actions, values, neglogpacs, states=None):
+    def train(self, lr, cliprange, obs, returns, masks, actions, values, neglogpacs, states=None, supervised=False):
         # Here we calculate advantage A(s,a) = R + yV(s') - V(s)
         # Returns = R + yV(s')
         advs = returns - values
@@ -150,8 +172,9 @@ class Model(object):
             td_map[self.train_model.S] = states
             td_map[self.train_model.M] = masks
 
+        train_op = self._sup_train_op if supervised else self._train_op
         return self.sess.run(
-            self.stats_list + [self._train_op],
+            self.stats_list + [train_ob],
             td_map
         )[:-1]
 
