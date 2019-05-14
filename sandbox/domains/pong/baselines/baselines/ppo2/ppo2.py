@@ -19,6 +19,14 @@ def constfn(val):
         return val
     return f
 
+def train_batch_acc(model, ob_s, a_s):
+    correct = 0
+    for ob, a in zip(ob_s, a_s):
+        a_ = model.step(ob)[0]
+        if a_ == a:
+            correct += 1
+    print (correct / len(a_s))
+
 def pretrain_subset(model,memory_path,index_path):
     import pickle
     import numpy as np
@@ -65,8 +73,8 @@ def pretrain_subset(model,memory_path,index_path):
 
     # nbatch_train = 1280
     nbatch_train = model.nbatch_train
-    lrnow = 0.0001
-    cliprangenow = 0.1
+    lrnow = 3e-4
+    cliprangenow = 0.2
     noptepochs = int(tot/size)
     for _ in tqdm.tqdm(range(noptepochs)):
         for start in range(0, size, nbatch_train):
@@ -78,7 +86,9 @@ def pretrain_subset(model,memory_path,index_path):
                 mbinds = inds[end-nbatch_train:end]
             slices = (arr[mbinds] for arr in (obs_, returns_, masks_, actions_, values_, neglogpacs_))
             the_stats = model.train(lrnow, cliprangenow, *slices)
-            print (the_stats)
+            ob_batch = obs_[mbinds]
+            act_batch = actions_[mbinds]
+            print ("train batch acc ", train_batch_acc(model, ob_batch, act_batch))
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
