@@ -25,7 +25,7 @@ def train_batch_acc(model, ob_s, a_s):
         a_ = model.step(ob)[0]
         if a_ == a:
             correct += 1
-    print (correct / len(a_s))
+    return (correct / len(a_s))
 
 def pretrain_subset(model,memory_path,index_path):
     import pickle
