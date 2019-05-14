@@ -79,7 +79,7 @@ def pretrain_subset(model,memory_path,index_path):
 
     train_batch_accs = [0.0]
 #    for _ in tqdm.tqdm(range(noptepochs)):
-    while train_batch_accs[-100:] / 100 < 0.9:
+    while sum(train_batch_accs[-100:]) / 100 < 0.9:
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
             end = min(size,end)
@@ -92,7 +92,7 @@ def pretrain_subset(model,memory_path,index_path):
             ob_batch = obs_[mbinds]
             act_batch = actions_[mbinds]
             train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch))
-            print ('past few train_batch_acc was ', train_batch_accs[-100:] / 100)
+            print ('past few train_batch_acc was ', sum(train_batch_accs[-100:]) / 100)
             print ('stats ', the_stats)
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
