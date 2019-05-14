@@ -174,7 +174,7 @@ class Model(object):
 
         train_op = self._sup_train_op if supervised else self._train_op
         return self.sess.run(
-            self.stats_list + [train_ob],
+            self.stats_list + [train_op],
             td_map
         )[:-1]
 
