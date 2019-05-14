@@ -88,9 +88,6 @@ class Model(object):
         # Total loss
         loss = pg_loss - entropy * ent_coef + vf_loss * vf_coef
 
-        # Supervised Loss
-        supervised_loss = pg_loss + vf_loss * vf_coef
-
         # UPDATE THE PARAMETERS USING LOSS (NORMAL)
         # 1. Get the model parameters
         params = tf.trainable_variables('ppo2_model')
@@ -116,6 +113,10 @@ class Model(object):
         self._train_op = self.trainer.apply_gradients(grads_and_var)
 
         # UPDATE THE PARAMETERS USING LOSS (SUPERVISED) =======================
+
+        # Supervised Loss
+        supervised_loss = pg_loss + vf_loss * vf_coef
+
         # 3. Calculate the gradients
         sup_grads_and_var = self.trainer.compute_gradients(supervised_loss, params)
         sup_grads, sup_var = zip(*sup_grads_and_var)
