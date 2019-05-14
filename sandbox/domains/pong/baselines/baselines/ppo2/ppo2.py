@@ -91,7 +91,10 @@ def pretrain_subset(model,memory_path,index_path):
             the_stats = model.train(lrnow, cliprangenow, *slices, supervised=True)
             ob_batch = obs_[mbinds]
             act_batch = actions_[mbinds]
+            # track some statistics
             train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch))
+            if len(train_batch_accs) > 10000:
+                train_batch_accs = train_batch_accs[-200:]
             print ('past few train_batch_acc was ', sum(train_batch_accs[-100:]) / 100)
             print ('stats ', the_stats)
 
