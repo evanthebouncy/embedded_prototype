@@ -133,7 +133,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
             save_interval=0, load_path=None, model_fn=None, mode = 'raw', index_path = None,
-          memory_path=None,loss_path=None,**network_kwargs):
+          memory_path=None,loss_path=None,is_pong=True,**network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
 
@@ -238,8 +238,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     # Start total timer
     if mode == 'evaluate_pretrain':
         print('pretraining with subset of pickle',index_path)
-        print('is_pong is TRUE')
-        is_pong = True
+        print('is_pong is ',is_pong)
+        
         pretrain_subset(model,memory_path,index_path, is_pong)
 
     tfirststart = time.time()
