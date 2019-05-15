@@ -99,7 +99,7 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
             cur = sum(accs[-1000:])
             prev = sum(accs[-2000:-1000])
             # fraction of improvement is small enough, i.e. we stopped improving
-            if  (cur - prev) / cur < 0.01
+            if  (cur - prev) / cur < 0.01:
                 return True
             return False
 
