@@ -99,10 +99,12 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
         # fraction of improvement is small enough, i.e. we stopped improving
         if  (cur - prev) / cur < 0.01:
             return True
+        if sum(accs[-100:]) / 100 < 0.9:
+            return True
         return False
 
 #    for _ in tqdm.tqdm(range(noptepochs)):
-    while sum(train_batch_accs[-100:]) / 100 < 0.9:
+    while True:#sum(train_batch_accs[-100:]) / 100 < 0.9:
         for start in range(0, size, nbatch_train):
             end = start + nbatch_train
             end = min(size,end)
