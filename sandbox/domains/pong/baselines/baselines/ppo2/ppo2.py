@@ -91,6 +91,18 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
     noptepochs = int(tot/size)
 
     train_batch_accs = [0.0]
+
+    def stop_condition(accs):
+        if len(accs) < 2000:
+            return False
+        else:
+            cur = sum(accs[-1000:])
+            prev = sum(accs[-2000:-1000])
+            # fraction of improvement is small enough, i.e. we stopped improving
+            if  (cur - prev) / cur < 0.01
+                return True
+            return False
+
 #    for _ in tqdm.tqdm(range(noptepochs)):
     while sum(train_batch_accs[-100:]) / 100 < 0.9:
         for start in range(0, size, nbatch_train):
@@ -107,9 +119,12 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
             # track some statistics
             train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch, is_pong))
             if len(train_batch_accs) > 10000:
-                train_batch_accs = train_batch_accs[-200:]
-            print ('past few train_batch_acc was ', sum(train_batch_accs[-100:]) / 100)
-            print ('stats ', the_stats)
+                train_batch_accs = train_batch_accs[-2001:]
+                print ('past few train_batch_acc was ', sum(train_batch_accs[-100:]) / 100)
+                print ('stats ', the_stats)
+                if stop_condition(train_batch_accs):
+                    print ("stop condition reached, pre-training is over")
+                    break
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
