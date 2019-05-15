@@ -15,20 +15,18 @@ def get(path):
     return x,y
 
 
-x1,y1 = get('ppo2_losses')
-x2,y2 = get('ppo2_losses_with_training')
-x3,y3 = get('ppo2_losses_selected_subset')
-x6,y6 = get('ppo2_losses_selected_subset_50000')
-x4,y4 = get('ppo2_losses_random_subset')
-x5,y5 = get('ppo2_losses_random_projection')
+x1,y1 = get('cart_data/result_loss_idx_whole')
+x2,y2 = get('cart_data/result_loss_idx_random')
+x3,y3 = get('cart_data/result_loss_idx_subset')
+#x6,y6 = get('ppo2_losses_selected_subset_50000')
+#x4,y4 = get('ppo2_losses_random_subset')
+#x5,y5 = get('ppo2_losses_random_projection')
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
-ax.plot(x1,y1)
-ax.plot(x2,y2)
-ax.plot(x3,y3)
-ax.plot(x4,y4)
-ax.plot(x5,y5)
-ax.plot(x6,y6)
+ax.plot(x1,y1,label='whole')
+ax.plot(x2,y2,label='random')
+ax.plot(x3,y3,label='subset')
+
 plt.savefig('finalgg.png')
