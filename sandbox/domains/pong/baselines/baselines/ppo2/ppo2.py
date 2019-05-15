@@ -19,6 +19,14 @@ def constfn(val):
         return val
     return f
 
+def remap_pong_action(aa):
+    if aa in [2, 3]:
+        return aa
+    if aa in [4, 5]:
+        return aa - 2
+    else:
+        return 0
+
 def train_batch_acc(model, ob_s, a_s, is_pong):
     correct = 0
     for ob, a in zip(ob_s, a_s):
@@ -26,10 +34,7 @@ def train_batch_acc(model, ob_s, a_s, is_pong):
 
         # remap action 4, 5 to 2, 3 respectively
         if is_pong:
-            if a_ in [4,5]:
-                a_ = a_ - 2
-            if a in [4,5]:
-                a = a - 2
+            a_, a = remap_pong_action(a_), remap_pong_action(a)
 
         if a_ == a:
             correct += 1
