@@ -11,7 +11,7 @@ note: if save\_path is specified, the model will be saved. otherwise it wont
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=8e6 --save_path=../pong_data/ppo2_pong_model --mode=train_expert
     
     # for CartPole-v0
-    python -m baselines.run --alg=ppo2 --env=CartPole-v0 --num_timesteps=1e5 --save_path=../cart_data/ppo2_cart_model_1e5 --mode=train_expert
+    python -m baselines.run --alg=ppo2 --env=CartPole-v0 --num_timesteps=1e6 --save_path=../cart_data/ppo2_cart_model_1e6 --mode=train_expert
     
 # use the expert model to generate a set of supervision memory
 
@@ -21,7 +21,7 @@ and we specify a memory path as well
     python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=1e5 --load_path=../pong_data/ppo2_pong_model --mode=collect_supervision --memory_path=../pong_data/ppo2_memory
     
     # for CartPole-v0
-    python -m baselines.run --alg=ppo2 --env=CartPole-v0 --num_timesteps=1e5 --load_path=../cart_data/ppo2_cart_model_1e5 --mode=collect_supervision --memory_path=../cart_data/ppo2_memory
+    python -m baselines.run --alg=ppo2 --env=CartPole-v0 --num_timesteps=1e5 --load_path=../cart_data/ppo2_cart_model_1e6 --mode=collect_supervision --memory_path=../cart_data/ppo2_memory
     
 
 # go to baselines. Save XYs in baselines/baselines/ppo2_memory_obs_actions
