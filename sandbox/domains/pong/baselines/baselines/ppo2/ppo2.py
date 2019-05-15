@@ -122,7 +122,7 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
                 print ('stats ', the_stats)
                 if stop_condition(train_batch_accs):
                     print ("stop condition reached, pre-training is over")
-                    break
+                    return
                 # clear out the accuracies
                 train_batch_accs = []
 
