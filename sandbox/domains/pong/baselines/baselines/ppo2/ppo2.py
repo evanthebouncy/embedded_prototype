@@ -93,7 +93,7 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
     train_batch_accs = [0.0]
 
     def stop_condition(accs):
-        assert len(accs) > 2000:
+        assert len(accs) > 2000, "malformed"
         cur = sum(accs[-1000:])
         prev = sum(accs[-2000:-1000])
         # fraction of improvement is small enough, i.e. we stopped improving
