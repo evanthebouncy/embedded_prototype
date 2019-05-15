@@ -19,15 +19,23 @@ def constfn(val):
         return val
     return f
 
-def train_batch_acc(model, ob_s, a_s):
+def train_batch_acc(model, ob_s, a_s, is_pong):
     correct = 0
     for ob, a in zip(ob_s, a_s):
         a_ = model.step(ob)[0]
+
+        # remap action 4, 5 to 2, 3 respectively
+        if is_pong:
+            if a_ in [4,5]:
+                a_ = a_ - 2
+            if a in [4,5]:
+                a = a - 2
+
         if a_ == a:
             correct += 1
     return (correct / len(a_s))
 
-def pretrain_subset(model,memory_path,index_path):
+def pretrain_subset(model,memory_path,index_path,is_pong):
     import pickle
     import numpy as np
 
@@ -92,7 +100,7 @@ def pretrain_subset(model,memory_path,index_path):
             ob_batch = obs_[mbinds]
             act_batch = actions_[mbinds]
             # track some statistics
-            train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch))
+            train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch, is_pong))
             if len(train_batch_accs) > 10000:
                 train_batch_accs = train_batch_accs[-200:]
             print ('past few train_batch_acc was ', sum(train_batch_accs[-100:]) / 100)
@@ -207,7 +215,9 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     # Start total timer
     if mode == 'evaluate_pretrain':
         print('pretraining with subset of pickle',index_path)
-        pretrain_subset(model,memory_path,index_path)
+        print('is_pong is TRUE')
+        is_pong = True
+        pretrain_subset(model,memory_path,index_path, is_pong)
 
     tfirststart = time.time()
     print('total_timesteps',total_timesteps)
