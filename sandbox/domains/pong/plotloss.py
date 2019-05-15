@@ -28,5 +28,5 @@ ax = fig.add_subplot(1, 1, 1)
 ax.plot(x1,y1,label='whole')
 ax.plot(x2,y2,label='random')
 ax.plot(x3,y3,label='subset')
-
+ax.legend(loc='best')
 plt.savefig('finalgg.png')
