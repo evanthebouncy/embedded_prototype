@@ -119,6 +119,7 @@ def pretrain_subset(model,memory_path,index_path,is_pong):
             # track some statistics
             train_batch_accs.append(train_batch_acc(model, ob_batch, act_batch, is_pong))
             # do stats track and early termination every 2000 iterations
+            print(len(train_batch_accs))
             if len(train_batch_accs) > 2000:
                 print ('past few train_batch_acc was ', sum(train_batch_accs[-1000:]) / 1000)
                 print ('stats ', the_stats)
