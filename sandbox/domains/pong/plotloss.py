@@ -25,8 +25,16 @@ x3,y3 = get('cart_data/result_loss_idx_subset')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
-ax.plot(x1,y1,label='whole')
-ax.plot(x2,y2,label='random')
-ax.plot(x3,y3,label='subset')
+
+
+
+
+p1, = ax.plot(x1,y1)
+p2, = ax.plot(x2,y2)
+p3, = ax.plot(x3,y3)
+
+
+ax.legend([p1, p2,p3], ["whole","random","subset"], loc='best')
+
 
 plt.savefig('finalgg.png')
