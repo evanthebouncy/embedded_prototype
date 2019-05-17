@@ -38,7 +38,7 @@ to transform the memory to two X and Y
     python cnn_vae.py baselines/baselines/ppo2_memory_obs_actions pong_emb_32.p
    
     # xy path, xy_32 path, learn_iter, batch_size
-    python cnn_vae.py pong_data/ppo2_memory_1e5_xy pong_data/ppo_1e5_32.p 1000 100
+    python cnn_vae.py pong_data/ppo2_memory_1e5_xy pong_data/ppo_1e5_32.p 100000 100
     
 to embed the memory into data_embed_path. The first is the memory file generated above, and the second is the embedded file
 
