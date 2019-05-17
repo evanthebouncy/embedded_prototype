@@ -46,6 +46,8 @@ to embed the memory into data_embed_path. The first is the memory file generated
     
     python -m subset_selection.make_all_subset_batches tiers ./domains/pong/pong_emb_32.p ./domains/pong/pong_tiers_32.p
 
+    python -m subset_selection.make_all_subset_batches tiers ./domains/pong/pong_data/ppo_1e5_32.p ./domains/pong/pong_data/ppo_1e5_tiers.p
+
     # for CartPole-v0
     python -m subset_selection.make_all_subset_batches tiers ./domains/pong/cart_data/ppo2_memory_obs_actionstuple ./domains/pong/cart_data/pong_tiers_32.p
 # go to pong. Save the three files in pong/pong_idx_whole.p,pong/pong_idx_random.p,pong/pong_idx_subset.p
