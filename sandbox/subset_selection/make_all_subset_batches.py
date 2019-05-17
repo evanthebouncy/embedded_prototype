@@ -55,7 +55,7 @@ def condensor(args):
     index_rankings = []
     losses = []
     X, Y = X_tr_emb, Y_tr
-    X,Y,index_rankings,losses = get_newXY(X,Y)
+    # X,Y,index_rankings,losses = get_newXY(X,Y)
     print(X.shape,Y.shape,X_tr_emb.shape)
     for i in tqdm(range(int(estimate_iter + 100))):
         X, Y, rm_idx, loss = condense_once(X, Y, X_tr_emb, Y_tr, throw_frac, require_loss)
@@ -168,6 +168,8 @@ if __name__ == '__main__':
     parser.add_argument("type")
     parser.add_argument("path")
     parser.add_argument("save_path")
+    parser.add_argument("final_size", type=int)
+    parser.add_argument("throw_frac", type=float)
     args = parser.parse_args()
     print ("cmd line args as follows :")
     print ("type", args.type)
@@ -182,8 +184,8 @@ if __name__ == '__main__':
         condensor_args.X_tr_emb = X_tr_emb
         condensor_args.Y_tr = Y_tr
         condensor_args.save_path = args.save_path
-        condensor_args.final_size = 100
-        condensor_args.throw_frac = 0.1
+        condensor_args.final_size = args.final_size
+        condensor_args.throw_frac = args.throw_frac
         condensor_args.require_loss = True
         condensor(condensor_args)
     # if args.type == 'kmeans':
