@@ -28,14 +28,19 @@ and we specify a memory path as well
 
     python baselines/inspector.py ../ppo2_memory baselines/ppo2_memory_obs_actions
     
-    to transform the memory to two X and Y
+    python inspector.py pong_data/ppo2_memory_1e5 pong_data/ppo2_memory_1e5_xy
+    
+to transform the memory to two X and Y
     
     
 # go to pong. Save embeddings at pong/pong_emb_32.p
 
     python cnn_vae.py baselines/baselines/ppo2_memory_obs_actions pong_emb_32.p
+   
+    # xy path, xy_32 path, learn_iter, batch_size
+    python cnn_vae.py pong_data/ppo2_memory_1e5_xy pong_data/ppo_1e5_32.p 100000 100
     
-    to embed the memory into data_embed_path. The first is the memory file generated above, and the second is the embedded file
+to embed the memory into data_embed_path. The first is the memory file generated above, and the second is the embedded file
 
 # go to sandbox. Save index at pong/pong_tiers_32.p.
     
